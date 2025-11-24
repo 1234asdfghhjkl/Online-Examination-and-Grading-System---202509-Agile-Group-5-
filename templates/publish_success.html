@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Published{% endblock %}
+
+{% block content %}
+<div class="card card-main">
+    <div class="card-header">
+        <h3>Exam Published</h3>
+        <p>Your exam is now stored in the system.</p>
+    </div>
+
+    <div class="card-body p-4">
+        <h5>Your Exam ID:</h5>
+        <p class="fw-bold fs-4">{{ exam.exam_id }}</p>
+
+        <hr>
+
+        <a href="/create-exam" class="btn btn-success w-100">
+            Create Another Exam
+        </a>
+    </div>
+</div>
+{% endblock %}
