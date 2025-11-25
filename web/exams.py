@@ -3,7 +3,7 @@ import html
 
 from core.validation import validate_exam, validate_exam_date
 from services.exam_service import save_exam_draft, publish_exam, get_exam_by_id
-from services.mcq_service import has_mcq_for_exam
+from services.question_service import has_mcq_for_exam, has_short_for_exam
 from .template_engine import render
 
 
@@ -46,11 +46,6 @@ def get_create_exam():
 
 
 def post_submit_exam(body: str):
-    """
-    Step 1 → Step 2:
-    Validate inputs, then create/update a DRAFT exam in Firestore.
-    Show review page with exam_id.
-    """
     form = _parse_form(body)
 
     errors = validate_exam(
@@ -71,7 +66,7 @@ def post_submit_exam(body: str):
         html_str = render("create_exam.html", ctx)
         return html_str, 400
 
-    # Valid → save/update draft in DB
+    # Valid : Save/update draft in DB
     exam_id = save_exam_draft(
         exam_id=form["exam_id"] or None,
         title=form["title"],
@@ -82,21 +77,32 @@ def post_submit_exam(body: str):
     )
 
     has_mcq = has_mcq_for_exam(exam_id)
+    has_short = has_short_for_exam(exam_id)
 
     ctx = dict(form)
     ctx["exam_id"] = exam_id
-    ctx["mcq_button_label"] = "Edit MCQ" if has_mcq else "Build MCQ"
+
+    # MCQ button
+    if has_mcq:
+        ctx["mcq_button_label"] = "View / Edit MCQ"
+        ctx["mcq_button_class"] = "btn btn-primary"
+    else:
+        ctx["mcq_button_label"] = "Build MCQ"
+        ctx["mcq_button_class"] = "btn btn-outline-primary"
+
+    # Short Answer button
+    if has_short:
+        ctx["short_button_label"] = "View / Edit Short Answers"
+        ctx["short_button_class"] = "btn btn-primary"
+    else:
+        ctx["short_button_label"] = "Build Short Answers"
+        ctx["short_button_class"] = "btn btn-outline-primary"
 
     html_str = render("exam_review.html", ctx)
     return html_str, 200
 
 
 def post_edit_exam(body: str):
-    """
-    Step 2 → Step 1:
-    Go back to edit exam details, keep current values and exam_id.
-    Does NOT touch DB; draft already saved when we left Step 1.
-    """
     form = _parse_form(body)
     ctx = dict(form)
     ctx["errors_html"] = ""
@@ -105,10 +111,6 @@ def post_edit_exam(body: str):
 
 
 def post_publish_exam(body: str):
-    """
-    Step 2 → Step 3:
-    Re-validate, then mark exam as PUBLISHED (no new exam_id).
-    """
     form = _parse_form(body)
 
     errors = validate_exam(
@@ -151,10 +153,6 @@ def post_publish_exam(body: str):
 
 
 def get_exam_review(exam_id: str):
-    """
-    Show the exam review page (Step 2) for an existing exam.
-    Used when returning from the MCQ builder.
-    """
     if not exam_id:
         html_str = render(
             "exam_review.html",
@@ -165,6 +163,10 @@ def get_exam_review(exam_id: str):
                 "duration": "",
                 "exam_date": "",
                 "instructions": "",
+                "mcq_button_label": "Build MCQ",
+                "mcq_button_class": "btn btn-outline-primary",
+                "short_button_label": "Build Short Answers",
+                "short_button_class": "btn btn-outline-primary",
             },
         )
         return html_str, 400
@@ -175,11 +177,15 @@ def get_exam_review(exam_id: str):
             "exam_review.html",
             {
                 "exam_id": exam_id,
-                "title": f"Exam {exam_id} not found",
+                "title": "Exam not found",
                 "description": "",
                 "duration": "",
                 "exam_date": "",
                 "instructions": "",
+                "mcq_button_label": "Build MCQ",
+                "mcq_button_class": "btn btn-outline-primary",
+                "short_button_label": "Build Short Answers",
+                "short_button_class": "btn btn-outline-primary",
             },
         )
         return html_str, 404
@@ -194,7 +200,23 @@ def get_exam_review(exam_id: str):
     }
 
     has_mcq = has_mcq_for_exam(ctx["exam_id"])
-    ctx["mcq_button_label"] = "Edit MCQ" if has_mcq else "Build MCQ"
+    has_short = has_short_for_exam(ctx["exam_id"])
+
+    # MCQ button
+    if has_mcq:
+        ctx["mcq_button_label"] = "View / Edit MCQ"
+        ctx["mcq_button_class"] = "btn btn-primary"
+    else:
+        ctx["mcq_button_label"] = "Build MCQ"
+        ctx["mcq_button_class"] = "btn btn-outline-primary"
+
+    # Short Answer button
+    if has_short:
+        ctx["short_button_label"] = "View / Edit Short Answers"
+        ctx["short_button_class"] = "btn btn-primary"
+    else:
+        ctx["short_button_label"] = "Build Short Answers"
+        ctx["short_button_class"] = "btn btn-outline-primary"
 
     html_str = render("exam_review.html", ctx)
     return html_str, 200

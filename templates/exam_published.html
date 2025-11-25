@@ -23,26 +23,26 @@
             </div>
         </div>
 
-        <h5 class="mb-1">{{title}}</h5>
+        <h4 class="mb-1">{{title}}</h4>
         <p class="text-muted mb-2">{{description}}</p>
 
-        <div class="small text-muted mb-3">
-            <span class="me-3"><strong>Exam ID:</strong> {{exam_id}}</span>
-            <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
-            <span class="me-3"><strong>Date:</strong> {{exam_date}}</span>
+        <div class="d-flex justify-content-between w-100 my-2">
+            <div><strong>Exam ID:</strong> {{exam_id}}</div>
+            <div><strong>Duration:</strong> {{duration}} minutes</div>
+            <div><strong>Date:</strong> {{exam_date}}</div>
         </div>
 
         <h6 class="mb-2">Instructions for Students</h6>
         <div class="border rounded-3 p-3 bg-light mb-4">
             <p class="mb-0" style="white-space: pre-wrap;">{{instructions}}</p>
         </div>
-        <div class="d-flex justify-content-between">
-            <a href="/mcq-builder?exam_id={{exam_id}}" class="btn btn-primary btn-rounded me-2">
-                    Edit MCQ Questions
-                </a>
-                <a href="/" class="btn btn-outline-secondary btn-rounded">
-                    Create another exam
-                </a>
+        <div class="d-flex justify-content-between gap-2">
+            <a href="/" class="btn btn-outline-secondary btn-rounded">
+                Back to Home
+            </a>
+            <a href="/create-exam" class="btn btn-outline-secondary btn-rounded">
+                Create another exam
+            </a>
         </div>
     </div>
 </div>

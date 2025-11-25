@@ -62,14 +62,6 @@ def publish_exam(exam_id: str):
 
 
 def get_exam_by_id(exam_id: str) -> Optional[Dict]:
-    """
-    Fetch an exam by its ID.
-
-    Works for both cases:
-    1) exam_id is used as the Firestore document ID
-    2) exam_id is stored as a field "exam_id" in a document
-    Returns a dict or None if not found.
-    """
     if not exam_id:
         return None
 

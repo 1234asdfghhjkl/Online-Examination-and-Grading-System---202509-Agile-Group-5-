@@ -2,7 +2,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 
 from web.template_engine import STATIC_DIR
-from web import exams, mcq
+from web import exams, mcq, short_answer
 from urllib.parse import urlparse, parse_qs
 
 HOST = "localhost"
@@ -19,6 +19,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     # ---------- GET ----------
+
     def do_GET(self):
         if self.path in ("/", "/create-exam"):
             html_str, status = exams.get_create_exam()
@@ -41,6 +42,12 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = exams.get_exam_published(exam_id)
             self._send_html(html_str, status)
+        elif self.path.startswith("/short-builder"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.get_short_builder(exam_id)
+            self._send_html(html_str, status)
 
         elif self.path.startswith("/static/"):
             self._serve_static(self.path[len("/static/") :])
@@ -48,11 +55,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404, "Not Found")
 
     # ---------- POST ----------
+
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8")
 
-        if self.path == "/review-exam":
+        if self.path == "/submit-exam":
             html_str, status = exams.post_submit_exam(body)
             self._send_html(html_str, status)
         elif self.path == "/edit-exam":
@@ -79,10 +87,31 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.post_mcq_done(exam_id, body)
             self._send_html(html_str, status)
+        elif self.path.startswith("/short-builder"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.post_short_builder(exam_id, body)
+            self._send_html(html_str, status)
+
+        elif self.path.startswith("/short-done"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.post_short_done(exam_id, body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/short-delete"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.post_short_delete(exam_id, body)
+            self._send_html(html_str, status)
+
         else:
             self.send_error(404, "Not Found")
 
     # ---------- Static files ----------
+
     def _serve_static(self, filename: str):
         path = os.path.join(STATIC_DIR, filename)
         if not os.path.isfile(path):

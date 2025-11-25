@@ -23,10 +23,10 @@
             </div>
         </div>
 
-        <h5 class="mb-1">{{title}}</h5>
+        <h4 class="mb-1">{{title}}</h4>
         <p class="text-muted mb-2">{{description}}</p>
 
-        <div class="small text-muted mb-3">
+        <div class="d-flex justify-content-between w-100 my-2 small text-muted mb-3">
             <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
             <span class="me-3"><strong>Date:</strong> {{exam_date}}</span>
         </div>
@@ -43,9 +43,12 @@
                     <p class="small text-muted mb-3">
                         Define objective questions with options and one correct answer.
                     </p>
-                    <a href="/mcq-builder?exam_id={{exam_id}}" class="btn btn-outline-primary w-100">
-                        {{mcq_button_label}}
-                    </a>
+                    <div class="d-flex justify-content-center">
+                        <a href="/mcq-builder?exam_id={{exam_id}}" class="{{mcq_button_class}}">
+                            {{mcq_button_label}}
+                        </a>
+                    </div>
+                    
                 </div>
             </div>
 
@@ -55,9 +58,11 @@
                     <p class="small text-muted mb-3">
                         Create open-ended questions that require short written responses.
                     </p>
-                    <button class="btn btn-outline-primary w-100" disabled>
-                        Short Answer Builder
-                    </button>
+                    <div class="d-flex justify-content-center">
+                       <a href="/short-builder?exam_id={{exam_id}}" class="{{short_button_class}}">
+                            {{short_button_label}}
+                        </a> 
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,7 +76,7 @@
                 <input type="hidden" name="duration" value="{{duration}}">
                 <input type="hidden" name="exam_date" value="{{exam_date}}">
                 <input type="hidden" name="instructions" value="{{instructions}}">
-                <button type="submit" class="btn btn-outline-secondary btn-rounded">
+                <button type="submit" class="btn btn-outline-secondary btn-rounded" style="width:120px; text-align:center;">
                     Back
                 </button>
             </form>
@@ -83,7 +88,7 @@
                 <input type="hidden" name="duration" value="{{duration}}">
                 <input type="hidden" name="exam_date" value="{{exam_date}}">
                 <input type="hidden" name="instructions" value="{{instructions}}">
-                <button type="submit" class="btn btn-primary btn-rounded">
+                <button type="submit" class="btn btn-primary btn-rounded" style="width:120px; text-align:center;">
                     Publish Exam
                 </button>
             </form>
