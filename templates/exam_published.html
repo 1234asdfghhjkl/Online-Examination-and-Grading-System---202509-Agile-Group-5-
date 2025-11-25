@@ -1,0 +1,44 @@
+<div class="card card-main">
+    <div class="card-header success">
+        <h3 class="mb-1">Exam Published ✅</h3>
+        <p class="mb-0">Step 3 of 3 · Your exam is now stored in the system.</p>
+    </div>
+    <div class="card-body p-4">
+
+        <div class="stepper">
+            <div class="stepper-item">
+                <div class="step-circle done">1</div>
+                <span class="step-label">Exam Details</span>
+                <div class="step-caption">Completed</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle done">2</div>
+                <span class="step-label">Add Questions</span>
+                <div class="step-caption">Planned</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle done">3</div>
+                <span class="step-label">Publish</span>
+                <div class="step-caption">Done</div>
+            </div>
+        </div>
+
+        <h5 class="mb-1">{{title}}</h5>
+        <p class="text-muted mb-2">{{description}}</p>
+
+        <div class="small text-muted mb-3">
+            <span class="me-3"><strong>Exam ID:</strong> {{exam_id}}</span>
+            <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
+            <span class="me-3"><strong>Date:</strong> {{exam_date}}</span>
+        </div>
+
+        <h6 class="mb-2">Instructions for Students</h6>
+        <div class="border rounded-3 p-3 bg-light mb-4">
+            <p class="mb-0" style="white-space: pre-wrap;">{{instructions}}</p>
+        </div>
+
+        <a href="/" class="btn btn-outline-secondary btn-rounded">
+            ← Create another exam
+        </a>
+    </div>
+</div>

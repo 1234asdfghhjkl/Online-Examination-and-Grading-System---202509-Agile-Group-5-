@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def validate_exam(title: str, description: str, duration: str, instructions: str):
     """
     Validate exam fields. Returns a list of error messages (empty if valid).

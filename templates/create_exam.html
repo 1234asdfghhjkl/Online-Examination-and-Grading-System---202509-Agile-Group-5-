@@ -1,17 +1,10 @@
-{% extends "base.html" %}
-
-{% block title %}Create Exam · Online Exam System{% endblock %}
-
-{% block content %}
 <div class="card card-main">
     <div class="card-header">
-        <h3>Create New Exam</h3>
-        <p>Step 1 of 3 · Define the basic exam details.</p>
+        <h3 class="mb-1">Create New Exam</h3>
+        <p class="mb-0">Step 1 of 3 · Define the basic exam details.</p>
     </div>
-
     <div class="card-body p-4">
 
-        <!-- Stepper -->
         <div class="stepper">
             <div class="stepper-item">
                 <div class="step-circle current">1</div>
@@ -25,115 +18,52 @@
             </div>
             <div class="stepper-item">
                 <div class="step-circle next">3</div>
-                <span class="step-label">Review & Publish</span>
-                <div class="step-caption">Coming later</div>
+                <span class="step-label">Publish</span>
+                <div class="step-caption">Finalize</div>
             </div>
         </div>
 
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="mb-3">
-              {% for category, msg in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} d-flex align-items-center" role="alert">
-                    {% if category == 'error' %}
-                        <span class="badge bg-danger me-2">Error</span>
-                    {% else %}
-                        <span class="badge bg-success me-2">Success</span>
-                    {% endif %}
-                    <div>{{ msg }}</div>
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
+        {{errors_html}}
 
-        <form action="/create-exam" method="POST" class="row g-3">
-
+        <form action="/submit-exam" method="POST" class="row g-3">
             <div class="col-12">
-                <label class="form-label" for="title">Exam Title</label>
-                <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    class="form-control"
-                    placeholder="e.g. Web Programming Midterm"
-                    value="{{ exam.title if exam else '' }}"
-                    required
-                >
-
+                <label class="form-label">Exam Title</label>
+                <input type="text" name="title" class="form-control"
+                       placeholder="e.g. Web Programming Midterm"
+                       required value="{{title}}">
             </div>
 
             <div class="col-12">
-                <label class="form-label" for="description">Description</label>
-                <textarea
-                    id="description"
-                    name="description"
-                    class="form-control"
-                    rows="3"
-                    placeholder="Briefly describe what this exam will cover."
-                    required
-                >{{ exam.description if exam else '' }}</textarea>
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3"
+                          placeholder="Briefly describe what this exam will cover."
+                          required>{{description}}</textarea>
             </div>
 
             <div class="col-md-6">
-                <label class="form-label" for="duration">Duration (minutes)</label>
-                <input
-                    type="number"
-                    id="duration"
-                    name="duration"
-                    class="form-control"
-                    value="{{ exam.duration if exam else '' }}"
-                    placeholder="e.g. 60"
-                    min="1"
-                    required
-                >
+                <label class="form-label">Duration (minutes)</label>
+                <input type="number" name="duration" class="form-control"
+                       placeholder="e.g. 60" min="1" required value="{{duration}}">
             </div>
 
             <div class="col-md-6">
-                <label class="form-label" for="exam_date">Exam Date</label>
-                <input
-                    type="date"
-                    id="exam_date"
-                    name="exam_date"
-                    class="form-control"
-                    value="{{ exam.exam_date if exam else '' }}"
-                    required
-                >
-            </div>
-
-
-            <div class="col-md-6">
-                <label class="form-label">Exam Mode</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    value="Online"
-                    disabled
-                >
+                <label class="form-label">Exam Date</label>
+                <input type="date" name="exam_date" class="form-control"
+                       required value="{{exam_date}}">
             </div>
 
             <div class="col-12">
-                <label class="form-label" for="instructions">Instructions for Students</label>
-                <textarea
-                    id="instructions"
-                    name="instructions"
-                    class="form-control"
-                    rows="4"
-                    placeholder="Example: Ensure a stable internet connection. Do not refresh the page during the exam."
-                    required
-                >{{ exam.instructions if exam else '' }}</textarea>
+                <label class="form-label">Instructions for Students</label>
+                <textarea name="instructions" class="form-control" rows="4"
+                          placeholder="Example: Ensure a stable internet connection. Do not refresh the page."
+                          required>{{instructions}}</textarea>
             </div>
 
-            <div class="col-12 d-flex justify-content-between align-items-center mt-2">
-                <div class="text-muted small">
-                    After saving, you can add MCQs or Short Answer questions.
-                </div>
-                <button type="submit" class="btn btn-primary">
-                    Next
+            <div class="col-12 d-flex justify-content-end mt-2">
+                <button type="submit" class="btn btn-primary btn-rounded">
+                    Save &amp; Continue
                 </button>
             </div>
         </form>
     </div>
 </div>
-{% endblock %}
