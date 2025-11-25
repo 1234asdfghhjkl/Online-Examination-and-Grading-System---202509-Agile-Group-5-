@@ -36,9 +36,13 @@
         <div class="border rounded-3 p-3 bg-light mb-4">
             <p class="mb-0" style="white-space: pre-wrap;">{{instructions}}</p>
         </div>
-
-        <a href="/" class="btn btn-outline-secondary btn-rounded">
-            ← Create another exam
-        </a>
+        <div class="d-flex justify-content-between">
+            <a href="/mcq-builder?exam_id={{exam_id}}" class="btn btn-primary btn-rounded me-2">
+                    Edit MCQ Questions
+                </a>
+                <a href="/" class="btn btn-outline-secondary btn-rounded">
+                    Create another exam
+                </a>
+        </div>
     </div>
 </div>

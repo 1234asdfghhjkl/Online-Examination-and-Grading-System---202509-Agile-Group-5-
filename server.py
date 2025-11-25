@@ -2,14 +2,14 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 
 from web.template_engine import STATIC_DIR
-from web import exams
+from web import exams, mcq
+from urllib.parse import urlparse, parse_qs
 
 HOST = "localhost"
 PORT = 8000
 
 
 class Handler(BaseHTTPRequestHandler):
-    # small util
     def _send_html(self, html_str: str, status: int = 200):
         data = html_str.encode("utf-8")
         self.send_response(status)
@@ -23,6 +23,25 @@ class Handler(BaseHTTPRequestHandler):
         if self.path in ("/", "/create-exam"):
             html_str, status = exams.get_create_exam()
             self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-builder"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.get_mcq_builder(exam_id)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/exam-review"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = exams.get_exam_review(exam_id)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/exam-publish"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = exams.get_exam_published(exam_id)
+            self._send_html(html_str, status)
+
         elif self.path.startswith("/static/"):
             self._serve_static(self.path[len("/static/") :])
         else:
@@ -33,7 +52,7 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8")
 
-        if self.path == "/submit-exam":
+        if self.path == "/review-exam":
             html_str, status = exams.post_submit_exam(body)
             self._send_html(html_str, status)
         elif self.path == "/edit-exam":
@@ -42,10 +61,28 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == "/publish-exam":
             html_str, status = exams.post_publish_exam(body)
             self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-builder"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.post_mcq_builder(exam_id, body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-delete"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.post_delete_mcq(exam_id, body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-done"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.post_mcq_done(exam_id, body)
+            self._send_html(html_str, status)
         else:
             self.send_error(404, "Not Found")
 
-    # ---------- static files ----------
+    # ---------- Static files ----------
     def _serve_static(self, filename: str):
         path = os.path.join(STATIC_DIR, filename)
         if not os.path.isfile(path):

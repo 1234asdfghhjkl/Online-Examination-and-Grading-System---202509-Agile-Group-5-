@@ -26,6 +26,7 @@
         {{errors_html}}
 
         <form action="/submit-exam" method="POST" class="row g-3">
+            <input type="hidden" name="exam_id" value="{{exam_id}}">
             <div class="col-12">
                 <label class="form-label">Exam Title</label>
                 <input type="text" name="title" class="form-control"
@@ -61,7 +62,7 @@
 
             <div class="col-12 d-flex justify-content-end mt-2">
                 <button type="submit" class="btn btn-primary btn-rounded">
-                    Save &amp; Continue
+                    Next
                 </button>
             </div>
         </form>

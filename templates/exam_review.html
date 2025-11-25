@@ -43,9 +43,9 @@
                     <p class="small text-muted mb-3">
                         Define objective questions with options and one correct answer.
                     </p>
-                    <button class="btn btn-outline-primary w-100" disabled>
-                        MCQ Builder
-                    </button>
+                    <a href="/mcq-builder?exam_id={{exam_id}}" class="btn btn-outline-primary w-100">
+                        {{mcq_button_label}}
+                    </a>
                 </div>
             </div>
 
@@ -65,17 +65,19 @@
         <div class="d-flex justify-content-between">
 
             <form action="/edit-exam" method="POST">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
                 <input type="hidden" name="title" value="{{title}}">
                 <input type="hidden" name="description" value="{{description}}">
                 <input type="hidden" name="duration" value="{{duration}}">
                 <input type="hidden" name="exam_date" value="{{exam_date}}">
                 <input type="hidden" name="instructions" value="{{instructions}}">
                 <button type="submit" class="btn btn-outline-secondary btn-rounded">
-                    ← Back
+                    Back
                 </button>
             </form>
 
             <form action="/publish-exam" method="POST">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
                 <input type="hidden" name="title" value="{{title}}">
                 <input type="hidden" name="description" value="{{description}}">
                 <input type="hidden" name="duration" value="{{duration}}">
