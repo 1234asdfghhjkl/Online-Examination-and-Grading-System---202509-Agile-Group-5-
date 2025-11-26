@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Short Answer Builder</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Short Answer Builder</h3>
+            <small>Exam ID: {{exam_id}}</small>
+        </div>
+        <div class="card-body">
+
+            {{errors_html}}
+            {{success_html}}
+
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h5 class="mb-3">Add Short-Answer Question</h5>
+                    <form action="/short-builder?exam_id={{exam_id}}" method="POST">
+                        <input type="hidden" name="exam_id" value="{{exam_id}}">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Question Text <span class="text-danger">*</span></label>
+                            <textarea name="question_text" class="form-control" rows="3"
+                                placeholder="Enter the question text here...">{{question_text}}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Sample Answer (optional)</label>
+                            <textarea name="sample_answer" class="form-control" rows="3"
+                                      placeholder="Optional example answer for marking reference...">{{sample_answer}}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Marks Allocation <span class="text-danger">*</span></label>
+                            <input type="number" name="marks" class="form-control" min="1"
+                                placeholder="e.g. 5" value="{{marks}}">
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-rounded">
+                                Save Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="mb-3">Student Preview</h5>
+                    <div>
+                        {{questions_preview_html}}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="mt-4">
+
+            <div class="d-flex justify-content-between mt-2">
+                <a href="/exam-review?exam_id={{exam_id}}" class="btn btn-outline-secondary btn-rounded">
+                    Back
+                </a>
+                <form action="/short-done?exam_id={{exam_id}}" method="POST">
+                    <button type="submit" class="btn btn-success btn-rounded">
+                        Done
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<div class="card card-main">
+    <div class="card-header">
+        <h3 class="mb-1">Add Exam Templates</h3>
+        <p class="mb-0">Step 2 of 3 · Review details and create exam questions.</p>
+    </div>
+    <div class="card-body p-4">
+
+        <div class="stepper">
+            <div class="stepper-item">
+                <div class="step-circle done">1</div>
+                <span class="step-label">Exam Details</span>
+                <div class="step-caption">Completed</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle current">2</div>
+                <span class="step-label">Add Questions</span>
+                <div class="step-caption">Next step</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle next">3</div>
+                <span class="step-label">Publish</span>
+                <div class="step-caption">Finalize</div>
+            </div>
+        </div>
+
+        <h4 class="mb-1">{{title}}</h4>
+        <p class="text-muted mb-2">{{description}}</p>
+
+        <div class="d-flex justify-content-between w-100 my-2 small text-muted mb-3">
+            <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
+            <span class="me-3"><strong>Date:</strong> {{exam_date}}</span>
+        </div>
+
+        <h6 class="mb-2">Instructions for Students</h6>
+        <div class="border rounded-3 p-3 bg-light mb-4">
+            <p class="mb-0" style="white-space: pre-wrap;">{{instructions}}</p>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100">
+                    <h6 class="mb-2">Add Multiple Choice Questions (MCQ)</h6>
+                    <p class="small text-muted mb-3">
+                        Define objective questions with options and one correct answer.
+                    </p>
+                    <div class="d-flex justify-content-center">
+                        <a href="/mcq-builder?exam_id={{exam_id}}" class="{{mcq_button_class}}">
+                            {{mcq_button_label}}
+                        </a>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="border rounded-3 p-3 h-100">
+                    <h6 class="mb-2">Add Short Answer Questions</h6>
+                    <p class="small text-muted mb-3">
+                        Create open-ended questions that require short written responses.
+                    </p>
+                    <div class="d-flex justify-content-center">
+                       <a href="/short-builder?exam_id={{exam_id}}" class="{{short_button_class}}">
+                            {{short_button_label}}
+                        </a> 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+
+            <form action="/edit-exam" method="POST">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
+                <input type="hidden" name="title" value="{{title}}">
+                <input type="hidden" name="description" value="{{description}}">
+                <input type="hidden" name="duration" value="{{duration}}">
+                <input type="hidden" name="exam_date" value="{{exam_date}}">
+                <input type="hidden" name="instructions" value="{{instructions}}">
+                <button type="submit" class="btn btn-outline-secondary btn-rounded" style="width:120px; text-align:center;">
+                    Back
+                </button>
+            </form>
+
+            <form action="/publish-exam" method="POST">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
+                <input type="hidden" name="title" value="{{title}}">
+                <input type="hidden" name="description" value="{{description}}">
+                <input type="hidden" name="duration" value="{{duration}}">
+                <input type="hidden" name="exam_date" value="{{exam_date}}">
+                <input type="hidden" name="instructions" value="{{instructions}}">
+                <button type="submit" class="btn btn-primary btn-rounded" style="width:120px; text-align:center;">
+                    Publish Exam
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,104 @@
+<div class="card card-main">
+    <div class="card-header">
+        <h3 class="mb-1">MCQ Builder</h3>
+        <p class="mb-0">Add multiple-choice questions for exam {{exam_id}}.</p>
+    </div>
+    <div class="card-body p-4">
+
+        <div class="stepper">
+            <div class="stepper-item">
+                <div class="step-circle done">1</div>
+                <span class="step-label">Exam Details</span>
+                <div class="step-caption">Completed</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle current">2</div>
+                <span class="step-label">MCQ Questions</span>
+                <div class="step-caption">Add questions</div>
+            </div>
+            <div class="stepper-item">
+                <div class="step-circle next">3</div>
+                <span class="step-label">Publish</span>
+                <div class="step-caption">Already published</div>
+            </div>
+        </div>
+
+        {{errors_html}}
+        {{success_html}}
+
+        <form action="/mcq-builder?exam_id={{exam_id}}" method="POST" class="row g-3 mb-4">
+            <input type="hidden" name="exam_id" value="{{exam_id}}">
+
+            <div class="col-12">
+                <label class="form-label">Question Text</label>
+                <textarea
+                    name="question_text"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Type the question here..."
+                    required
+                >{{question_text}}</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Option A</label>
+                <input type="text" name="option_a" class="form-control" required
+                       placeholder="Option A" value="{{option_a}}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Option B</label>
+                <input type="text" name="option_b" class="form-control" required
+                       placeholder="Option B" value="{{option_b}}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Option C</label>
+                <input type="text" name="option_c" class="form-control" required
+                       placeholder="Option C" value="{{option_c}}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Option D</label>
+                <input type="text" name="option_d" class="form-control" required
+                       placeholder="Option D" value="{{option_d}}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Correct Answer</label>
+                <select name="correct_option" class="form-select" required>
+                    <option value="">Select correct option</option>
+                    <option value="A" {{ "selected" if correct_option == "A" else "" }}>A</option>
+                    <option value="B" {{ "selected" if correct_option == "B" else "" }}>B</option>
+                    <option value="C" {{ "selected" if correct_option == "C" else "" }}>C</option>
+                    <option value="D" {{ "selected" if correct_option == "D" else "" }}>D</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Marks</label>
+                <input type="number" name="marks" class="form-control"
+                       placeholder="e.g. 2" min="1" required value="{{marks}}">
+            </div>
+
+            <div class="col-12 d-flex justify-content-end mt-2">
+                <button type="submit" class="btn btn-primary btn-rounded">
+                    Add Question
+                </button>
+            </div>
+        </form>
+
+        <hr>
+
+        <h5 class="mb-3">Student Preview</h5>
+        {{questions_preview_html}}
+        <div class="d-flex justify-content-between mt-2">
+            <a href="/exam-review?exam_id={{exam_id}}" class="btn btn-outline-secondary btn-rounded">
+                Back
+            </a>
+
+            <form action="/mcq-done?exam_id={{exam_id}}" method="POST">
+                <button type="submit" class="btn btn-success btn-rounded">
+                    Done
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

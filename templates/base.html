@@ -2,140 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Online Exam System{% endblock %}</title>
+    <title>Online Exam System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fb, #e4e9f2);
-            min-height: 100vh;
-        }
-        .navbar-brand {
-            font-weight: 600;
-            letter-spacing: 0.03em;
-        }
-        .page-wrapper {
-            min-height: calc(100vh - 56px);
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 40px 15px;
-        }
-        .card-main {
-            width: 100%;
-            max-width: 720px;
-            border-radius: 16px;
-            box-shadow: 0 15px 40px rgba(15, 23, 42, 0.12);
-            border: none;
-        }
-        .card-header {
-            border-bottom: none;
-            border-radius: 16px 16px 0 0 !important;
-            background: linear-gradient(135deg, #2563eb, #4f46e5);
-            color: #fff;
-            padding: 20px 24px;
-        }
-        .card-header h3 {
-            margin: 0;
-            font-size: 1.4rem;
-        }
-        .card-header p {
-            margin: 4px 0 0;
-            opacity: 0.9;
-        }
-        .form-label {
-            font-weight: 500;
-        }
-        .btn-primary {
-            border-radius: 999px;
-            padding: 10px 18px;
-            font-weight: 500;
-        }
-        .alert {
-            border-radius: 999px;
-            padding: 8px 14px;
-            font-size: 0.9rem;
-        }
-        footer {
-            text-align: center;
-            font-size: 0.8rem;
-            color: #6b7280;
-            margin-bottom: 16px;
-        }
-        /* Progress stepper */
-        .stepper {
-            display: flex;
-            justify-content: space-between;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            font-size: 0.85rem;
-        }
-        .stepper-item {
-            flex: 1;
-            text-align: center;
-        }
-        .step-circle {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            margin-bottom: 0.25rem;
-        }
-        .step-circle.done {
-            background: #22c55e;
-            color: #fff;
-        }
-        .step-circle.current {
-            background: #2563eb;
-            color: #fff;
-        }
-        .step-circle.next {
-            background: #e5e7eb;
-            color: #6b7280;
-        }
-        .step-label {
-            display: block;
-            font-weight: 500;
-        }
-        .step-caption {
-            color: #9ca3af;
-            font-size: 0.75rem;
-        }
-
-    </style>
-
-    {% block extra_head %}{% endblock %}
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container-fluid px-4">
-        <a class="navbar-brand" href="/">
-            📝 Online Exam System
-        </a>
-        <div class="d-flex">
-            <a href="/create-exam" class="btn btn-sm btn-outline-primary rounded-pill">
-                + Create Exam
-            </a>
-        </div>
+        <span class="navbar-brand fw-semibold">📝 Online Exam System</span>
     </div>
 </nav>
 
 <div class="page-wrapper">
-    {% block content %}{% endblock %}
+    {{content}}
 </div>
-
-<footer>
-    © 2024 Online Exam System · Lecturer Panel
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-{% block extra_scripts %}{% endblock %}
 </body>
 </html>
