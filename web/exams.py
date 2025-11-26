@@ -19,7 +19,8 @@ def _parse_form(body: str) -> dict:
         "description": get_field("description"),
         "duration": get_field("duration"),
         "exam_date": get_field("exam_date"),
-        "exam_time": get_field("exam_time"),  # ← Add this line
+        "start_time": get_field("start_time"),  # CHANGED
+        "end_time": get_field("end_time"),      # NEW
         "instructions": get_field("instructions"),
     }
 
@@ -36,6 +37,8 @@ def get_create_exam():
             "description": "",
             "duration": "",
             "exam_date": "",
+            "start_time": "",   # CHANGED
+            "end_time": "",     # NEW
             "instructions": "",
             "errors_html": "",
         },
@@ -75,7 +78,8 @@ def post_submit_exam(body: str):
         duration=form["duration"],
         instructions=form["instructions"],
         exam_date=form["exam_date"],
-        exam_time=form["exam_time"],
+        start_time=form["start_time"],
+        end_time=form["end_time"],
     )
 
     has_mcq = has_mcq_for_exam(exam_id)
@@ -143,7 +147,8 @@ def post_publish_exam(body: str):
         duration=form["duration"],
         instructions=form["instructions"],
         exam_date=form["exam_date"],
-        exam_time=form["exam_time"],  # ← ADD THIS LINE
+        start_time=form["start_time"],  # ← ADD THIS LINE
+        end_time=form["end_time"],
     )
 
     # Change status to published
@@ -163,8 +168,9 @@ def get_exam_review(exam_id: str):
                 "exam_id": "",
                 "title": "",
                 "description": "",
-                "duration": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "instructions": "",
                 "mcq_button_label": "Build MCQ",
                 "mcq_button_class": "btn btn-outline-primary",
@@ -184,6 +190,8 @@ def get_exam_review(exam_id: str):
                 "description": "",
                 "duration": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "instructions": "",
                 "mcq_button_label": "Build MCQ",
                 "mcq_button_class": "btn btn-outline-primary",
@@ -193,13 +201,36 @@ def get_exam_review(exam_id: str):
         )
         return html_str, 404
 
+    # MIGRATION LOGIC: Handle old exam_time field
+    start_time = exam.get("start_time", "")
+    end_time = exam.get("end_time", "")
+    duration = exam.get("duration", 0)
+    
+    # If start_time doesn't exist but exam_time does (old format)
+    if not start_time and exam.get("exam_time"):
+        start_time = exam.get("exam_time", "00:00")
+        # Calculate end_time from start_time + duration
+        if duration:
+            start_h, start_m = map(int, start_time.split(':'))
+            total_minutes = start_h * 60 + start_m + int(duration)
+            end_h = (total_minutes // 60) % 24
+            end_m = total_minutes % 60
+            end_time = f"{end_h:02d}:{end_m:02d}"
+    
+    # Fallback defaults if still empty
+    if not start_time:
+        start_time = "00:00"
+    if not end_time:
+        end_time = "01:00"
+
     ctx = {
         "exam_id": exam.get("exam_id", exam_id),
         "title": exam.get("title", ""),
         "description": exam.get("description", ""),
-        "duration": exam.get("duration", ""),
+        "duration": str(duration),
         "exam_date": exam.get("exam_date", ""),
-        "exam_time": exam.get("exam_time", "00:00"),
+        "start_time": start_time,
+        "end_time": end_time,
         "instructions": exam.get("instructions", ""),
     }
 
@@ -225,7 +256,6 @@ def get_exam_review(exam_id: str):
     html_str = render("exam_review.html", ctx)
     return html_str, 200
 
-
 def get_exam_published(exam_id: str):
     if not exam_id:
         html_str = render(
@@ -236,6 +266,8 @@ def get_exam_published(exam_id: str):
                 "description": "",
                 "duration": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "instructions": "",
             },
         )
@@ -243,7 +275,6 @@ def get_exam_published(exam_id: str):
 
     exam = get_exam_by_id(exam_id)
     if not exam:
-        # Exam not found in DB
         html_str = render(
             "exam_published.html",
             {
@@ -252,17 +283,43 @@ def get_exam_published(exam_id: str):
                 "description": "",
                 "duration": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "instructions": "",
             },
         )
         return html_str, 404
 
+    # MIGRATION LOGIC: Handle old exam_time field
+    start_time = exam.get("start_time", "")
+    end_time = exam.get("end_time", "")
+    duration = exam.get("duration", 0)
+    
+    # If start_time doesn't exist but exam_time does (old format)
+    if not start_time and exam.get("exam_time"):
+        start_time = exam.get("exam_time", "00:00")
+        # Calculate end_time from start_time + duration
+        if duration:
+            start_h, start_m = map(int, start_time.split(':'))
+            total_minutes = start_h * 60 + start_m + int(duration)
+            end_h = (total_minutes // 60) % 24
+            end_m = total_minutes % 60
+            end_time = f"{end_h:02d}:{end_m:02d}"
+    
+    # Fallback defaults
+    if not start_time:
+        start_time = "00:00"
+    if not end_time:
+        end_time = "01:00"
+
     ctx = {
         "exam_id": exam.get("exam_id", exam_id),
         "title": exam.get("title", ""),
         "description": exam.get("description", ""),
-        "duration": exam.get("duration", ""),
+        "duration": str(duration),
         "exam_date": exam.get("exam_date", ""),
+        "start_time": start_time,
+        "end_time": end_time,
         "instructions": exam.get("instructions", ""),
     }
 
@@ -294,7 +351,31 @@ def get_exam_list():
             description = html.escape(exam.get("description", "No description"))
             duration = exam.get("duration", 0)
             date = exam.get("exam_date", "N/A")
-            time = exam.get("exam_time", "N/A")
+            
+            # MIGRATION LOGIC: Handle old exam_time field
+            start_time = exam.get("start_time", "")
+            end_time = exam.get("end_time", "")
+            
+            # If start_time doesn't exist but exam_time does (old format)
+            if not start_time and exam.get("exam_time"):
+                start_time = exam.get("exam_time", "N/A")
+                # Calculate end_time from start_time + duration
+                if duration and start_time != "N/A":
+                    try:
+                        start_h, start_m = map(int, start_time.split(':'))
+                        total_minutes = start_h * 60 + start_m + int(duration)
+                        end_h = (total_minutes // 60) % 24
+                        end_m = total_minutes % 60
+                        end_time = f"{end_h:02d}:{end_m:02d}"
+                    except:
+                        end_time = "N/A"
+            
+            # Fallback
+            if not start_time:
+                start_time = "N/A"
+            if not end_time:
+                end_time = "N/A"
+            
             status = exam.get("status", "draft")
 
             # Status badge
@@ -302,8 +383,9 @@ def get_exam_list():
                 status_badge = '<span class="badge bg-success">Published</span>'
                 actions = f"""
                     <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="/grade-submissions?exam_id={e_id}" class="btn btn-sm btn-success">Grade</a>
                     <a href="/student-exam?exam_id={e_id}&student_id=test_student_01" 
-                       class="btn btn-sm btn-outline-success">Test as Student</a>
+                        class="btn btn-sm btn-outline-success">Test as Student</a>
                 """
             else:
                 status_badge = '<span class="badge bg-warning text-dark">Draft</span>'
@@ -322,7 +404,8 @@ def get_exam_list():
                             </h5>
                             <p class="text-muted small mb-2">{description}</p>
                             <div class="text-muted small">
-                                <span class="me-3">📅 {date} at {time}</span>
+                                <span class="me-3">📅 {date}</span>
+                                <span class="me-3">🕐 {start_time} - {end_time}</span>
                                 <span class="me-3">⏱️ {duration} mins</span>
                                 <span class="text-primary">ID: {e_id}</span>
                             </div>
@@ -336,4 +419,80 @@ def get_exam_list():
             """
 
     html_str = render("exam_list.html", {"exam_list_html": exam_list_html})
+    return html_str, 200
+
+def post_submit_exam(body: str):
+    form = _parse_form(body)
+    
+    # DEBUG
+    print("=" * 60)
+    print("DEBUG post_submit_exam - Form received:")
+    print(f"  start_time: '{form.get('start_time')}'")
+    print(f"  end_time: '{form.get('end_time')}'")
+    print(f"  duration: '{form.get('duration')}'")
+    print("=" * 60)
+
+    errors = validate_exam(
+        form["title"], form["description"], form["duration"], form["instructions"]
+    )
+    errors.extend(validate_exam_date(form["exam_date"]))
+
+    if errors:
+        error_items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
+        errors_html = f"""
+        <div class="alert alert-danger mb-3">
+            <strong>Please fix the following:</strong>
+            <ul class="mb-0">{error_items}</ul>
+        </div>
+        """
+        ctx = dict(form)
+        ctx["errors_html"] = errors_html
+        html_str = render("create_exam.html", ctx)
+        return html_str, 400
+
+    # Valid : Save/update draft in DB
+    exam_id = save_exam_draft(
+        exam_id=form["exam_id"] or None,
+        title=form["title"],
+        description=form["description"],
+        duration=form["duration"],
+        instructions=form["instructions"],
+        exam_date=form["exam_date"],
+        start_time=form["start_time"],
+        end_time=form["end_time"],
+    )
+    
+    # DEBUG
+    print(f"DEBUG: Saved exam {exam_id} to database")
+    print(f"  with start_time: {form['start_time']}, end_time: {form['end_time']}")
+
+    has_mcq = has_mcq_for_exam(exam_id)
+    has_short = has_short_for_exam(exam_id)
+
+    ctx = dict(form)
+    ctx["exam_id"] = exam_id
+    
+    # DEBUG
+    print(f"DEBUG: Context for exam_review.html:")
+    print(f"  start_time: '{ctx.get('start_time')}'")
+    print(f"  end_time: '{ctx.get('end_time')}'")
+    print("=" * 60)
+
+    # MCQ button
+    if has_mcq:
+        ctx["mcq_button_label"] = "View / Edit MCQ"
+        ctx["mcq_button_class"] = "btn btn-primary"
+    else:
+        ctx["mcq_button_label"] = "Build MCQ"
+        ctx["mcq_button_class"] = "btn btn-outline-primary"
+
+    # Short Answer button
+    if has_short:
+        ctx["short_button_label"] = "View / Edit Short Answers"
+        ctx["short_button_class"] = "btn btn-primary"
+    else:
+        ctx["short_button_label"] = "Build Short Answers"
+        ctx["short_button_class"] = "btn btn-outline-primary"
+
+    html_str = render("exam_review.html", ctx)
     return html_str, 200

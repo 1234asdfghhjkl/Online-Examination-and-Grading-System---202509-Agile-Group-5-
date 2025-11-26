@@ -26,9 +26,12 @@
         <h4 class="mb-1">{{title}}</h4>
         <p class="text-muted mb-2">{{description}}</p>
 
+        <!-- UPDATED: Show start time, end time, and duration -->
         <div class="d-flex justify-content-between w-100 my-2 small text-muted mb-3">
-            <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
             <span class="me-3"><strong>Date:</strong> {{exam_date}}</span>
+            <span class="me-3"><strong>Start Time:</strong> {{start_time}}</span>
+            <span class="me-3"><strong>End Time:</strong> {{end_time}}</span>
+            <span class="me-3"><strong>Duration:</strong> {{duration}} minutes</span>
         </div>
 
         <h6 class="mb-2">Instructions for Students</h6>
@@ -69,25 +72,30 @@
 
         <div class="d-flex justify-content-between">
 
+            <!-- UPDATED: Add start_time and end_time hidden fields -->
             <form action="/edit-exam" method="POST">
                 <input type="hidden" name="exam_id" value="{{exam_id}}">
                 <input type="hidden" name="title" value="{{title}}">
                 <input type="hidden" name="description" value="{{description}}">
                 <input type="hidden" name="duration" value="{{duration}}">
                 <input type="hidden" name="exam_date" value="{{exam_date}}">
+                <input type="hidden" name="start_time" value="{{start_time}}">
+                <input type="hidden" name="end_time" value="{{end_time}}">
                 <input type="hidden" name="instructions" value="{{instructions}}">
                 <button type="submit" class="btn btn-outline-secondary btn-rounded" style="width:120px; text-align:center;">
                     Back
                 </button>
             </form>
 
+            <!-- UPDATED: Add start_time and end_time, remove exam_time -->
             <form action="/publish-exam" method="POST">
                 <input type="hidden" name="exam_id" value="{{exam_id}}">
                 <input type="hidden" name="title" value="{{title}}">
                 <input type="hidden" name="description" value="{{description}}">
                 <input type="hidden" name="duration" value="{{duration}}">
                 <input type="hidden" name="exam_date" value="{{exam_date}}">
-                <input type="hidden" name="exam_time" value="{{exam_time}}">
+                <input type="hidden" name="start_time" value="{{start_time}}">
+                <input type="hidden" name="end_time" value="{{end_time}}">
                 <input type="hidden" name="instructions" value="{{instructions}}">
                 <button type="submit" class="btn btn-primary btn-rounded" style="width:120px; text-align:center;">
                     Publish Exam

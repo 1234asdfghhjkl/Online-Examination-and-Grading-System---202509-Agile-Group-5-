@@ -42,3 +42,39 @@ def validate_exam_date(exam_date: str):
         errors.append("Invalid exam date format.")
 
     return errors
+
+def validate_exam_times(start_time: str, end_time: str, duration: str):
+    """
+    Validate start time, end time, and duration consistency
+    """
+    errors = []
+    
+    if not start_time:
+        errors.append("Start time is required.")
+    if not end_time:
+        errors.append("End time is required.")
+        
+    if start_time and end_time and duration:
+        try:
+            # Parse times
+            start_h, start_m = map(int, start_time.split(':'))
+            end_h, end_m = map(int, end_time.split(':'))
+            
+            start_minutes = start_h * 60 + start_m
+            end_minutes = end_h * 60 + end_m
+            
+            # Handle next day scenario
+            if end_minutes <= start_minutes:
+                end_minutes += 24 * 60
+            
+            calculated_duration = end_minutes - start_minutes
+            provided_duration = int(duration)
+            
+            # Allow small discrepancy (1 minute) due to rounding
+            if abs(calculated_duration - provided_duration) > 1:
+                errors.append(f"Time mismatch: Start time and end time don't match the duration.")
+                
+        except (ValueError, AttributeError):
+            errors.append("Invalid time format.")
+    
+    return errors

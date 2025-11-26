@@ -20,6 +20,12 @@ def render(template_name: str, context=None) -> str:
 
     base_html = load_template("base.html")
     content_html = load_template(template_name)
+    
+    # DEBUG
+    if 'start_time' in context:
+        print(f"DEBUG template_engine: Rendering {template_name}")
+        print(f"  Context has start_time: '{context.get('start_time')}'")
+        print(f"  Context has end_time: '{context.get('end_time')}'")
 
     for key, value in context.items():
         placeholder = "{{" + key + "}}"
@@ -28,6 +34,10 @@ def render(template_name: str, context=None) -> str:
         else:
             replacement = _html.escape(str(value))
         content_html = content_html.replace(placeholder, replacement)
+        
+        # DEBUG for time fields
+        if key in ['start_time', 'end_time']:
+            print(f"  Replaced {placeholder} with '{replacement}'")
 
     for leftover in ["{{errors_html}}"]:
         content_html = content_html.replace(leftover, "")

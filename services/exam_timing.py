@@ -17,7 +17,8 @@ def get_server_time() -> datetime:
     return datetime.now(MALAYSIA_TZ)
 
 
-def parse_exam_datetime(exam_date: str, exam_time: str = "00:00") -> datetime:
+def parse_exam_datetime(exam_date: str, start_time: str = "00:00") -> datetime:
+
     """
     Combines exam date and time into a datetime object in Malaysia timezone
 
@@ -30,7 +31,7 @@ def parse_exam_datetime(exam_date: str, exam_time: str = "00:00") -> datetime:
     """
     try:
         date_part = datetime.strptime(exam_date, "%Y-%m-%d").date()
-        time_part = datetime.strptime(exam_time, "%H:%M").time()
+        time_part = datetime.strptime(start_time, "%H:%M").time()
         naive_dt = datetime.combine(date_part, time_part)
         # Make it timezone-aware with Malaysia timezone
         return naive_dt.replace(tzinfo=MALAYSIA_TZ)
@@ -94,11 +95,11 @@ def check_exam_access(exam_id: str) -> Dict:
 
     # Get exam timing details
     exam_date = exam.get("exam_date", "")
-    exam_time = exam.get("exam_time", "00:00")
+    start_time = exam.get("start_time", exam.get("exam_time", "00:00"))  # Migration fallback
     duration = exam.get("duration", 0)
 
     try:
-        exam_start = parse_exam_datetime(exam_date, exam_time)
+        exam_start = parse_exam_datetime(exam_date, start_time)
         exam_start_time, hard_end = calculate_exam_window(
             exam_start, duration
         )  # ← Fixed

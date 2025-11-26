@@ -1,0 +1,59 @@
+<div class="card card-main">
+    <div class="card-header">
+        <h3 class="mb-1">Grade Submissions - {{exam_title}}</h3>
+        <p class="mb-0">Exam ID: {{exam_id}}</p>
+    </div>
+    <div class="card-body p-4">
+        
+        {{message_html}}
+        
+        <div class="mb-4">
+            <h5>Submissions List</h5>
+            {{submissions_list_html}}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/exam-list" class="btn btn-outline-secondary btn-rounded">
+                Back to Exam List
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.submission-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: #f9fafb;
+}
+
+.submission-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.graded {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.status-badge.pending {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.status-badge.partial {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+</style>

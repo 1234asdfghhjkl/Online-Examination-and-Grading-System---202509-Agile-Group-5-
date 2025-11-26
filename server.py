@@ -76,6 +76,12 @@ class Handler(BaseHTTPRequestHandler):
             student_id = query.get("student_id", [""])[0]
             html_str, status = student_exam.get_student_exam(exam_id, student_id)
             self._send_html(html_str, status)
+            
+        elif path == "/exam-result":
+            exam_id = query.get("exam_id", [""])[0]
+            student_id = query.get("student_id", [""])[0]
+            html_str, status = student_exam.get_exam_result(exam_id, student_id)
+            self._send_html(html_str, status)
 
         # API routes
         elif path == "/api/check-exam-status":
@@ -83,6 +89,19 @@ class Handler(BaseHTTPRequestHandler):
             student_id = query.get("student_id", [""])[0]
             json_str, status = student_exam.api_check_exam_status(exam_id, student_id)
             self._send_json(json_str, status)
+            
+        elif path == "/grade-submissions":
+            exam_id = query.get("exam_id", [""])[0]
+            from web import grading
+            html_str, status = grading.get_grade_submissions(exam_id)
+            self._send_html(html_str, status)
+            
+            
+        elif path == "/grade-short-answers":
+            submission_id = query.get("submission_id", [""])[0]
+            from web import grading
+            html_str, status = grading.get_grade_short_answers(submission_id)
+            self._send_html(html_str, status)
 
         # Static files
         elif path.startswith("/static/"):
@@ -147,6 +166,11 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/save-draft":
             json_str, status = student_exam.api_save_draft(body)
             self._send_json(json_str, status)
+            
+        elif path == "/save-short-answer-grades":
+            from web import grading
+            html_str, status = grading.post_save_short_answer_grades(body)
+            self._send_html(html_str, status)
 
         else:
             self.send_error(404, "Not Found")

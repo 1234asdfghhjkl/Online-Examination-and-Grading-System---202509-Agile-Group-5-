@@ -1,0 +1,87 @@
+<div class="card card-main" style="max-width: 1200px;">
+    <div class="card-header">
+        <h3 class="mb-1">Grade Short Answers</h3>
+        <p class="mb-0">Student: {{student_id}} | Exam: {{exam_title}}</p>
+    </div>
+    <div class="card-body p-4">
+        
+        {{message_html}}
+        
+        <div class="alert alert-info mb-4">
+            <strong>📊 Grading Summary</strong>
+            <div class="mt-2">
+                <span class="me-3">MCQ Score: {{mcq_score}}/{{mcq_total}}</span>
+                <span>Short Answer: {{sa_score}}/{{sa_total}}</span>
+            </div>
+        </div>
+        
+        <form action="/save-short-answer-grades" method="POST">
+            <input type="hidden" name="submission_id" value="{{submission_id}}">
+            
+            {{questions_html}}
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="/grade-submissions?exam_id={{exam_id}}" class="btn btn-outline-secondary btn-rounded">
+                    Back to Submissions
+                </a>
+                <button type="submit" class="btn btn-success btn-rounded">
+                    💾 Save Grades
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.grading-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f9fafb, #ffffff);
+}
+
+.grading-card h5 {
+    color: #667eea;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.answer-section {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+.sample-answer {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.student-answer {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.marks-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.marks-input {
+    width: 100px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+</style>
