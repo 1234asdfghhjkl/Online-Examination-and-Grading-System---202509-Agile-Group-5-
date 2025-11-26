@@ -18,7 +18,6 @@ def get_server_time() -> datetime:
 
 
 def parse_exam_datetime(exam_date: str, start_time: str = "00:00") -> datetime:
-
     """
     Combines exam date and time into a datetime object in Malaysia timezone
 
@@ -95,7 +94,9 @@ def check_exam_access(exam_id: str) -> Dict:
 
     # Get exam timing details
     exam_date = exam.get("exam_date", "")
-    start_time = exam.get("start_time", exam.get("exam_time", "00:00"))  # Migration fallback
+    start_time = exam.get(
+        "start_time", exam.get("exam_time", "00:00")
+    )  # Migration fallback
     duration = exam.get("duration", 0)
 
     try:

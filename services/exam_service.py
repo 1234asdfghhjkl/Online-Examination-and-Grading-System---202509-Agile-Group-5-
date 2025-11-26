@@ -18,7 +18,7 @@ def save_exam_draft(
     instructions: str,
     exam_date: str,
     start_time: str = "00:00",  # CHANGED: exam_time → start_time
-    end_time: str = "01:00",    # NEW: Add end_time parameter
+    end_time: str = "01:00",  # NEW: Add end_time parameter
 ) -> str:
     duration_int = int(duration)
 
@@ -29,7 +29,7 @@ def save_exam_draft(
         "instructions": instructions.strip(),
         "exam_date": exam_date.strip(),
         "start_time": start_time.strip(),  # CHANGED
-        "end_time": end_time.strip(),      # NEW
+        "end_time": end_time.strip(),  # NEW
         "status": "draft",
         "updated_at": datetime.utcnow(),
     }

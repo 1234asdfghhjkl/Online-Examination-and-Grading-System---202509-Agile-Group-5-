@@ -249,7 +249,7 @@ def post_submit_student_exam(body: str):
     POST handler for student exam submission
     """
     from services.grading_service import grade_mcq_submission, save_grading_result
-    
+
     data = parse_qs(body)
 
     def get_field(key: str) -> str:
@@ -393,12 +393,13 @@ def api_save_draft(body: str):
     except Exception as e:
         return json.dumps({"error": str(e)}), 500
 
+
 def get_exam_result(exam_id: str, student_id: str):
     """
     Display exam results for a student
     """
     from services.grading_service import get_student_submission
-    
+
     if not exam_id or not student_id:
         error_html = render(
             "error.html",
@@ -408,7 +409,7 @@ def get_exam_result(exam_id: str, student_id: str):
             },
         )
         return error_html, 400
-    
+
     # Get exam details
     exam = get_exam_by_id(exam_id)
     if not exam:
@@ -417,7 +418,7 @@ def get_exam_result(exam_id: str, student_id: str):
             {"message": f"Exam {exam_id} not found", "back_url": "/student-dashboard"},
         )
         return error_html, 404
-    
+
     # Get submission
     submission = get_student_submission(exam_id, student_id)
     if not submission:
@@ -429,10 +430,10 @@ def get_exam_result(exam_id: str, student_id: str):
             },
         )
         return error_html, 404
-    
+
     # Get grading result
     grading_result = submission.get("grading_result", {})
-    
+
     if not grading_result:
         error_html = render(
             "error.html",
@@ -442,14 +443,14 @@ def get_exam_result(exam_id: str, student_id: str):
             },
         )
         return error_html, 404
-    
+
     # Build question review HTML
     questions_review_html = ""
     for q_result in grading_result.get("question_results", []):
         is_correct = q_result.get("is_correct")
         student_answer = q_result.get("student_answer", "")
         correct_answer = q_result.get("correct_answer", "")
-        
+
         if not student_answer or student_answer == "Not answered":
             status_class = "unanswered"
             status_icon = "⚠️"
@@ -459,7 +460,7 @@ def get_exam_result(exam_id: str, student_id: str):
         else:
             status_class = "incorrect"
             status_icon = "❌"
-        
+
         questions_review_html += f"""
         <div class="question-item {status_class}">
             <div class="question-header">
@@ -478,18 +479,20 @@ def get_exam_result(exam_id: str, student_id: str):
             </div>
         </div>
         """
-    
+
     # Add short answer results if available
     sa_grades = submission.get("short_answer_graded_questions", [])
     if sa_grades:
-        questions_review_html += '<h4 class="mb-4 mt-5" style="color: #667eea;">✏️ Short Answer Results</h4>'
-        
+        questions_review_html += (
+            '<h4 class="mb-4 mt-5" style="color: #667eea;">✏️ Short Answer Results</h4>'
+        )
+
         for sa in sa_grades:
             q_no = sa.get("question_no")
             awarded = sa.get("awarded_marks", 0)
             max_marks = sa.get("max_marks", 0)
             feedback = sa.get("feedback", "")
-            
+
             questions_review_html += f"""
             <div class="question-item">
                 <div class="question-header">
@@ -501,7 +504,7 @@ def get_exam_result(exam_id: str, student_id: str):
                 {f'<div class="answer-info"><strong>Feedback:</strong> {html.escape(feedback)}</div>' if feedback else ''}
             </div>
             """
-    
+
     context = {
         "exam_id": exam_id,
         "student_id": student_id,
@@ -515,6 +518,6 @@ def get_exam_result(exam_id: str, student_id: str):
         "unanswered": grading_result.get("unanswered", 0),
         "questions_review_html": questions_review_html,
     }
-    
+
     html_str = render("exam_result.html", context)
     return html_str, 200

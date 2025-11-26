@@ -35,7 +35,7 @@ def get_grade_submissions(exam_id: str):
             },
         )
         return html_str, 400
-    
+
     exam = get_exam_by_id(exam_id)
     if not exam:
         message_html = f"""
@@ -53,9 +53,9 @@ def get_grade_submissions(exam_id: str):
             },
         )
         return html_str, 404
-    
+
     submissions = get_all_submissions_for_exam(exam_id)
-    
+
     if not submissions:
         submissions_list_html = """
         <div class="alert alert-info">
@@ -68,55 +68,57 @@ def get_grade_submissions(exam_id: str):
             student_id = sub.get("student_id", "Unknown")
             submission_id = sub.get("submission_id")
             submitted_at = sub.get("submitted_at")
-            
+
             if submitted_at:
                 submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M:%S")
             else:
                 submitted_time = "N/A"
-            
+
             mcq_score = sub.get("mcq_score", 0)
             mcq_total = sub.get("mcq_total", 0)
             sa_obtained = sub.get("sa_obtained_marks", 0)
             sa_total = sub.get("sa_total_marks", 0)
-            
+
             # Grading status
             mcq_graded = sub.get("mcq_graded", False)
             sa_graded = sub.get("sa_graded", False)
             fully_graded = sub.get("fully_graded", False)
-            
+
             if fully_graded:
-                status_badge = '<span class="status-badge graded">✅ Fully Graded</span>'
-                action_btn = f'''
+                status_badge = (
+                    '<span class="status-badge graded">✅ Fully Graded</span>'
+                )
+                action_btn = f"""
                 <a href="/view-graded-submission?submission_id={submission_id}" 
                    class="btn btn-sm btn-outline-success">
                     View Results
                 </a>
-                '''
+                """
             elif sa_graded:
                 status_badge = '<span class="status-badge graded">✅ SA Graded</span>'
-                action_btn = f'''
+                action_btn = f"""
                 <a href="/grade-short-answers?submission_id={submission_id}" 
                    class="btn btn-sm btn-outline-primary">
                     Review Grading
                 </a>
-                '''
+                """
             elif mcq_graded:
                 status_badge = '<span class="status-badge pending">⏳ SA Pending</span>'
-                action_btn = f'''
+                action_btn = f"""
                 <a href="/grade-short-answers?submission_id={submission_id}" 
                    class="btn btn-sm btn-primary">
                     Grade Short Answers
                 </a>
-                '''
+                """
             else:
                 status_badge = '<span class="status-badge pending">⏳ Pending</span>'
-                action_btn = f'''
+                action_btn = f"""
                 <a href="/grade-short-answers?submission_id={submission_id}" 
                    class="btn btn-sm btn-primary">
                     Start Grading
                 </a>
-                '''
-            
+                """
+
             submissions_list_html += f"""
             <div class="submission-card">
                 <div class="row align-items-center">
@@ -139,7 +141,7 @@ def get_grade_submissions(exam_id: str):
                 </div>
             </div>
             """
-    
+
     html_str = render(
         "grade_submissions.html",
         {
@@ -178,7 +180,7 @@ def get_grade_short_answers(submission_id: str):
             },
         )
         return html_str, 400
-    
+
     submission = get_submission_with_questions(submission_id)
     if not submission:
         message_html = """
@@ -202,29 +204,29 @@ def get_grade_short_answers(submission_id: str):
             },
         )
         return html_str, 404
-    
+
     exam_id = submission.get("exam_id")
     exam = get_exam_by_id(exam_id)
-    
+
     # Build questions HTML
     questions_html = ""
     sa_questions = submission.get("short_answer_questions", [])
-    
+
     # Get existing grades if any
     existing_grades = submission.get("short_answer_grades", {})
-    
+
     for q in sa_questions:
         q_no = q.get("question_no")
         question_text = q.get("question_text", "")
         sample_answer = q.get("sample_answer", "")
         student_answer = q.get("student_answer", "")
         max_marks = q.get("max_marks", 0)
-        
+
         # Get existing grade for this question
         existing_grade = existing_grades.get(str(q_no), {})
         awarded_marks = existing_grade.get("marks", 0)
         feedback = existing_grade.get("feedback", "")
-        
+
         questions_html += f"""
         <div class="grading-card">
             <h5>Question {q_no} ({max_marks} marks)</h5>
@@ -275,19 +277,19 @@ def get_grade_short_answers(submission_id: str):
             </div>
         </div>
         """
-    
+
     if not questions_html:
         questions_html = """
         <div class="alert alert-info">
             No short answer questions in this exam.
         </div>
         """
-    
+
     mcq_score = submission.get("mcq_score", 0)
     mcq_total = submission.get("mcq_total", 0)
     sa_obtained = submission.get("sa_obtained_marks", 0)
     sa_total = submission.get("sa_total_marks", 0)
-    
+
     html_str = render(
         "grade_short_answers.html",
         {
@@ -311,45 +313,41 @@ def post_save_short_answer_grades(body: str):
     POST handler for saving short answer grades
     """
     data = parse_qs(body)
-    
+
     def get_field(key: str) -> str:
         return data.get(key, [""])[0]
-    
+
     submission_id = get_field("submission_id")
-    
+
     if not submission_id:
         return "<h1>Error: Missing submission ID</h1>", 400
-    
+
     submission = get_submission_with_questions(submission_id)
     if not submission:
         return "<h1>Error: Submission not found</h1>", 404
-    
+
     # Parse grades
     grades = {}
     sa_questions = submission.get("short_answer_questions", [])
-    
+
     for q in sa_questions:
         q_no = str(q.get("question_no"))
         marks_key = f"marks_{q_no}"
         feedback_key = f"feedback_{q_no}"
         max_marks_key = f"max_marks_{q_no}"
-        
+
         marks = float(get_field(marks_key) or 0)
         feedback = get_field(feedback_key)
         max_marks = float(get_field(max_marks_key) or 0)
-        
-        grades[q_no] = {
-            "marks": marks,
-            "max_marks": max_marks,
-            "feedback": feedback
-        }
-    
+
+        grades[q_no] = {"marks": marks, "max_marks": max_marks, "feedback": feedback}
+
     # Save grades
     try:
         save_short_answer_grades(submission_id, grades)
     except Exception as e:
         return f"<h1>Error saving grades: {html.escape(str(e))}</h1>", 500
-    
+
     # Redirect back to submissions list
     exam_id = submission.get("exam_id")
     redirect_html = f"""
