@@ -1,4 +1,6 @@
 """
+Bug: incorrec timing
+Bug: incorrect submit time
 Exam Timing Service
 Handles exam scheduling, time validation, and access control
 """
