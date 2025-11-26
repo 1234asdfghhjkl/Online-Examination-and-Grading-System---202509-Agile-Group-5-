@@ -19,6 +19,7 @@ def _parse_form(body: str) -> dict:
         "description": get_field("description"),
         "duration": get_field("duration"),
         "exam_date": get_field("exam_date"),
+        "exam_time": get_field("exam_time"),  # ← Add this line
         "instructions": get_field("instructions"),
     }
 
@@ -74,6 +75,7 @@ def post_submit_exam(body: str):
         duration=form["duration"],
         instructions=form["instructions"],
         exam_date=form["exam_date"],
+        exam_time=form["exam_time"],
     )
 
     has_mcq = has_mcq_for_exam(exam_id)
@@ -141,6 +143,7 @@ def post_publish_exam(body: str):
         duration=form["duration"],
         instructions=form["instructions"],
         exam_date=form["exam_date"],
+        exam_time=form["exam_time"],  # ← ADD THIS LINE
     )
 
     # Change status to published
@@ -196,6 +199,7 @@ def get_exam_review(exam_id: str):
         "description": exam.get("description", ""),
         "duration": exam.get("duration", ""),
         "exam_date": exam.get("exam_date", ""),
+        "exam_time": exam.get("exam_time", "00:00"),
         "instructions": exam.get("instructions", ""),
     }
 
@@ -263,4 +267,73 @@ def get_exam_published(exam_id: str):
     }
 
     html_str = render("exam_published.html", ctx)
+    return html_str, 200
+
+
+def get_exam_list():
+    """
+    GET handler for listing all exams (admin view)
+    """
+    from services.exam_service import get_all_exams
+
+    all_exams = get_all_exams()
+
+    exam_list_html = ""
+
+    if not all_exams:
+        exam_list_html = """
+        <div class="alert alert-info">
+            <h5>No exams found</h5>
+            <p class="mb-0">Click "Create New Exam" to get started.</p>
+        </div>
+        """
+    else:
+        for exam in all_exams:
+            e_id = exam.get("exam_id", "")
+            title = html.escape(exam.get("title", "Untitled"))
+            description = html.escape(exam.get("description", "No description"))
+            duration = exam.get("duration", 0)
+            date = exam.get("exam_date", "N/A")
+            time = exam.get("exam_time", "N/A")
+            status = exam.get("status", "draft")
+
+            # Status badge
+            if status == "published":
+                status_badge = '<span class="badge bg-success">Published</span>'
+                actions = f"""
+                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="/student-exam?exam_id={e_id}&student_id=test_student_01" 
+                       class="btn btn-sm btn-outline-success">Test as Student</a>
+                """
+            else:
+                status_badge = '<span class="badge bg-warning text-dark">Draft</span>'
+                actions = f"""
+                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="/mcq-builder?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Add Questions</a>
+                """
+
+            exam_list_html += f"""
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="card-title mb-1">
+                                {title} {status_badge}
+                            </h5>
+                            <p class="text-muted small mb-2">{description}</p>
+                            <div class="text-muted small">
+                                <span class="me-3">📅 {date} at {time}</span>
+                                <span class="me-3">⏱️ {duration} mins</span>
+                                <span class="text-primary">ID: {e_id}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {actions}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            """
+
+    html_str = render("exam_list.html", {"exam_list_html": exam_list_html})
     return html_str, 200

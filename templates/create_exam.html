@@ -41,16 +41,23 @@
                           required>{{description}}</textarea>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Duration (minutes)</label>
                 <input type="number" name="duration" class="form-control"
                        placeholder="e.g. 60" min="1" required value="{{duration}}">
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Exam Date</label>
                 <input type="date" name="exam_date" class="form-control"
                        required value="{{exam_date}}">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Exam Time</label>
+                <input type="time" name="exam_time" class="form-control"
+                       required value="{{exam_time}}">
+                <small class="text-muted">24-hour format (e.g., 14:30)</small>
             </div>
 
             <div class="col-12">
