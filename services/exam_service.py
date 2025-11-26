@@ -17,6 +17,7 @@ def save_exam_draft(
     duration: str,
     instructions: str,
     exam_date: str,
+    exam_time: str = "00:00",  # NEW: Add exam time parameter
 ) -> str:
     duration_int = int(duration)
 
@@ -26,6 +27,7 @@ def save_exam_draft(
         "duration": duration_int,
         "instructions": instructions.strip(),
         "exam_date": exam_date.strip(),
+        "exam_time": exam_time.strip(),  # NEW: Store exam time
         "status": "draft",
         "updated_at": datetime.utcnow(),
     }
@@ -82,3 +84,47 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
         return data
 
     return None
+
+
+def get_all_published_exams() -> list:
+    """
+    Fetches all exams with status 'published'
+    """
+    try:
+        # Remove the order_by to avoid index requirement
+        query = db.collection("exams").where("status", "==", "published").stream()
+
+        exams = []
+        for doc in query:
+            data = doc.to_dict()
+            data["exam_id"] = doc.id  # Ensure ID is included
+            exams.append(data)
+
+        # Sort in Python instead
+        exams.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+
+        return exams
+    except Exception as e:
+        print(f"Error fetching published exams: {e}")
+        return []
+
+
+def get_all_exams() -> list:
+    """
+    Fetches all exams (both draft and published)
+    """
+    from firebase_admin import firestore
+
+    query = (
+        db.collection("exams")
+        .order_by("created_at", direction=firestore.Query.DESCENDING)
+        .stream()
+    )
+
+    exams = []
+    for doc in query:
+        data = doc.to_dict()
+        data["exam_id"] = doc.id  # Ensure ID is included
+        exams.append(data)
+
+    return exams
