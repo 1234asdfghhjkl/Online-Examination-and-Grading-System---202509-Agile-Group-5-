@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Dict
+from typing import List, Dict, Optional, Any
 
 from core.firebase_db import db
 
@@ -82,3 +82,49 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
         return data
 
     return None
+
+def get_all_exams() -> List[Dict]:
+    exams: List[Dict] = []
+    try:
+        query = db.collection("exams").order_by("created_at")
+    except Exception:
+        query = db.collection("exams")
+
+    for doc in query.stream():
+        data = doc.to_dict() or {}
+        data["exam_id"] = data.get("exam_id", doc.id)
+        exams.append(data)
+
+    return exams
+
+def update_exam(exam_id: str, data: Dict[str, Any]) -> None:
+    """
+    Update an existing exam document by exam_id.
+    """
+    if not exam_id:
+        return
+
+    data = data.copy()
+    data["exam_id"] = exam_id
+    data["updated_at"] = datetime.utcnow()
+
+    db.collection("exams").document(exam_id).set(data, merge=True)
+
+    docs = db.collection("exams").where("exam_id", "==", exam_id).stream()
+    for d in docs:
+        d.reference.set(data, merge=True)
+
+
+def delete_exam_and_questions(exam_id: str) -> None:
+    if not exam_id:
+        return
+
+    q_query = db.collection("questions").where("exam_id", "==", exam_id).stream()
+    for q_doc in q_query:
+        q_doc.reference.delete()
+
+    db.collection("exams").document(exam_id).delete()
+
+    e_query = db.collection("exams").where("exam_id", "==", exam_id).stream()
+    for e_doc in e_query:
+        e_doc.reference.delete()

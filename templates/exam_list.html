@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All Exams</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">All Exams</h3>
+        <a href="/create-exam" class="btn btn-primary btn-rounded btn-sm">
+            + Create New Exam
+        </a>
+    </div>
+
+    {{errors_html}}
+    {{success_html}}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            {{exams_html}}
+        </div>
+    </div>
+</div>
+</body>
+</html>

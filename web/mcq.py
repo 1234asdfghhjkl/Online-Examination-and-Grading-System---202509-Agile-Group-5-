@@ -10,7 +10,6 @@ from services.question_service import (
     delete_mcq_question,
 )
 
-
 def _parse_form(body: str) -> dict:
     data = parse_qs(body)
 
@@ -156,7 +155,6 @@ def get_mcq_builder(exam_id: str):
         },
     )
     return html_str, 200
-
 
 def post_mcq_builder(exam_id: str, body: str):
     form = _parse_form(body)
@@ -324,9 +322,6 @@ def post_delete_mcq(exam_id: str, body: str):
     return html_str, 200
 
 
-# At least 1 question must be added before proceeding
-
-
 def post_mcq_done(exam_id: str, body: str):
     if not exam_id or not exam_exists(exam_id):
         errors_html = """
@@ -350,11 +345,10 @@ def post_mcq_done(exam_id: str, body: str):
         }
         html_str = render("mcq_builder.html", ctx)
         return html_str, 400
-
+        
     questions = get_mcq_questions_by_exam(exam_id)
 
     if not questions:
-        # No questions added
         errors_html = """
         <div class="alert alert-danger mb-3">
             Please add at least <strong>ONE MCQ question</strong> before completing this step.
@@ -377,7 +371,6 @@ def post_mcq_done(exam_id: str, body: str):
         html_str = render("mcq_builder.html", ctx)
         return html_str, 200
 
-    # At least one question exists → decide where to go based on exam status
     exam = get_exam_by_id(exam_id)
     status = (exam or {}).get("status", "draft")
 
@@ -386,12 +379,31 @@ def post_mcq_done(exam_id: str, body: str):
     else:
         redirect_url = f"/exam-review?exam_id={html.escape(exam_id)}"
 
-    # refresh/redirect
     html_str = f"""
     <html>
       <head>
         <meta http-equiv="refresh" content="0; url={redirect_url}">
       </head>
+      <body></body>
+    </html>
+    """
+    return html_str, 200
+
+def get_mcq_edit(exam_id: str):
+    html_str, status = get_mcq_builder(exam_id)
+    return html_str, status
+
+
+def post_mcq_edit(exam_id: str, body: str):
+    html_str, status = post_mcq_builder(exam_id, body)
+    return html_str, status
+
+
+def post_mcq_edit_done(exam_id: str, body: str):
+    redirect_url = f"/exam-edit?exam_id={html.escape(exam_id)}"
+    html_str = f"""
+    <html>
+      <head><meta http-equiv="refresh" content="0; url={redirect_url}"></head>
       <body></body>
     </html>
     """

@@ -90,7 +90,7 @@
         <h5 class="mb-3">Student Preview</h5>
         {{questions_preview_html}}
         <div class="d-flex justify-content-between mt-2">
-            <a href="/exam-review?exam_id={{exam_id}}" class="btn btn-outline-secondary btn-rounded">
+            <a id="back-btn" href="#" class="btn btn-outline-secondary btn-rounded">
                 Back
             </a>
 
@@ -102,3 +102,16 @@
         </div>
     </div>
 </div>
+
+<script>
+  (function () {
+    const backBtn = document.getElementById('back-btn');
+    const examId = "{{exam_id}}"; 
+
+    if (window.location.href.indexOf('mcq-edit') !== -1) {
+      backBtn.href = '/exams';
+    } else {
+      backBtn.href = '/exam-review?exam_id=' + encodeURIComponent(examId);
+    }
+  })();
+</script>

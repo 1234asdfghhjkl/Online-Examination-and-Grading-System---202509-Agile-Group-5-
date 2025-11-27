@@ -21,7 +21,10 @@ class Handler(BaseHTTPRequestHandler):
     # ---------- GET ----------
 
     def do_GET(self):
-        if self.path in ("/", "/create-exam"):
+        if  self.path in ("/","/exams"):
+            html_str, status = exams.get_exam_list()
+            self._send_html(html_str, status)
+        elif self.path == "/create-exam":
             html_str, status = exams.get_create_exam()
             self._send_html(html_str, status)
         elif self.path.startswith("/mcq-builder"):
@@ -48,7 +51,24 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.get_short_builder(exam_id)
             self._send_html(html_str, status)
-
+        elif self.path.startswith("/exam-edit"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = exams.get_exam_edit(exam_id)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-edit"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.get_mcq_edit(exam_id)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/short-edit"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.get_short_edit(exam_id)
+            self._send_html(html_str, status)
         elif self.path.startswith("/static/"):
             self._serve_static(self.path[len("/static/") :])
         else:
@@ -106,7 +126,41 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.post_short_delete(exam_id, body)
             self._send_html(html_str, status)
+        elif self.path == "/exam-delete":
+            html_str, status = exams.post_exam_delete(body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/exam-edit"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = exams.post_exam_edit(exam_id, body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/mcq-edit-save"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.post_mcq_edit(exam_id, body)
+            self._send_html(html_str, status)
 
+        elif self.path.startswith("/mcq-edit-done"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = mcq.post_mcq_edit_done(exam_id, body)
+            self._send_html(html_str, status)
+        elif self.path.startswith("/short-edit-save"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.post_short_edit(exam_id, body)
+            self._send_html(html_str, status)
+
+        elif self.path.startswith("/short-edit-done"):
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = short_answer.post_short_edit_done(exam_id, body)
+            self._send_html(html_str, status)
         else:
             self.send_error(404, "Not Found")
 

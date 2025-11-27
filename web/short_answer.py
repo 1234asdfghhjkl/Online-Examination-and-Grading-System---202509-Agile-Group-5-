@@ -339,3 +339,21 @@ def post_short_done(exam_id: str, body: str):
     </html>
     """
     return html_str, 200
+
+def get_short_edit(exam_id: str):
+    return get_short_builder(exam_id)
+
+
+def post_short_edit(exam_id: str, body: str):
+    return post_short_builder(exam_id, body)
+
+
+def post_short_edit_done(exam_id: str, body: str):
+    redirect_url = f"/exam-edit?exam_id={html.escape(exam_id)}"
+    html_str = f"""
+    <html>
+      <head><meta http-equiv="refresh" content="0; url={redirect_url}"></head>
+      <body></body>
+    </html>
+    """
+    return html_str, 200

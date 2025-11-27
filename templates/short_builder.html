@@ -61,7 +61,7 @@
             <hr class="mt-4">
 
             <div class="d-flex justify-content-between mt-2">
-                <a href="/exam-review?exam_id={{exam_id}}" class="btn btn-outline-secondary btn-rounded">
+                <a id="back-btn" href="#" class="btn btn-outline-secondary btn-rounded">
                     Back
                 </a>
                 <form action="/short-done?exam_id={{exam_id}}" method="POST">
@@ -76,3 +76,16 @@
 </div>
 </body>
 </html>
+
+<script>
+  (function () {
+    const backBtn = document.getElementById('back-btn');
+    const examId = "{{exam_id}}";
+
+    if (window.location.href.indexOf('short-edit') !== -1) {
+      backBtn.href = '/exams';
+    } else {
+      backBtn.href = '/exam-review?exam_id=' + encodeURIComponent(examId);
+    }
+  })();
+</script>
