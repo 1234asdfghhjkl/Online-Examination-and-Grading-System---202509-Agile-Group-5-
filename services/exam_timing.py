@@ -41,7 +41,7 @@ def parse_exam_datetime(exam_date: str, start_time: str = "00:00") -> datetime:
 
 
 def calculate_exam_window(
-    exam_start: datetime, duration_minutes: int, buffer_minutes: int = 5
+    exam_start: datetime, duration_minutes: int
 ) -> Tuple[datetime, datetime]:
     """
     Calculate the valid exam window
@@ -49,12 +49,11 @@ def calculate_exam_window(
     Args:
         exam_start: Exam start datetime
         duration_minutes: Exam duration in minutes
-        buffer_minutes: Extra time buffer after official end (default: 5 min)
 
     Returns:
         Tuple of (start_time, end_time)
     """
-    end_time = exam_start + timedelta(minutes=duration_minutes + buffer_minutes)
+    end_time = exam_start + timedelta(minutes=duration_minutes)
     return exam_start, end_time
 
 
