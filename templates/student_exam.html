@@ -256,6 +256,118 @@
             border-radius: 2px;
             margin: 2rem 0;
         }
+        
+        /* Custom Modal Styles */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .custom-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content-custom {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            position: relative;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-message {
+            color: #6b7280;
+            text-align: center;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .modal-btn {
+            padding: 0.875rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-btn-cancel {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .modal-btn-cancel:hover {
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+        
+        .modal-btn-confirm {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .modal-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -376,8 +488,28 @@
     </div>
 </div>
 
+<!-- Custom Confirmation Modal -->
+<div id="submit-modal" class="custom-modal">
+    <div class="modal-content-custom">
+        <div class="modal-icon">
+            🎯
+        </div>
+        <h3 class="modal-title">Submit Your Exam?</h3>
+        <p class="modal-message">
+            Are you sure you want to submit your exam? Once submitted, you won't be able to make any changes to your answers.
+        </p>
+        <div class="modal-buttons">
+            <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel">
+                Cancel
+            </button>
+            <button type="button" class="modal-btn modal-btn-confirm" id="modal-confirm">
+                Yes, Submit
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-// [Keep the same JavaScript code from before - no changes needed]
 const CONFIG = {
     examId: '{{exam_id}}',
     studentId: '{{student_id}}',
@@ -392,6 +524,7 @@ let timerInterval = null;
 let syncInterval = null;
 let autoSaveInterval = null;
 let examStatus = '{{exam_status}}';
+let isSubmitting = false;
 
 function getServerTime() {
     return new Date(Date.now() + CONFIG.serverTimeOffset);
@@ -569,15 +702,33 @@ document.getElementById('save-draft-btn')?.addEventListener('click', saveDraft);
 document.getElementById('exam-form')?.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    if (confirm('Are you sure you want to submit your exam? This action cannot be undone.')) {
+    // Show custom modal instead of default alert
+    const modal = document.getElementById('submit-modal');
+    modal.classList.add('show');
+    
+    // Handle cancel button
+    document.getElementById('modal-cancel').onclick = function() {
+        modal.classList.remove('show');
+    };
+    
+    // Handle confirm button
+    document.getElementById('modal-confirm').onclick = function() {
+        isSubmitting = true; // Set flag to prevent beforeunload alert
         const answers = collectAnswers();
         document.getElementById('answers-data').value = JSON.stringify(answers);
-        this.submit();
-    }
+        document.getElementById('exam-form').submit();
+    };
+    
+    // Close modal when clicking outside
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            modal.classList.remove('show');
+        }
+    };
 });
 
 window.addEventListener('beforeunload', function(e) {
-    if (examStatus === 'active') {
+    if (examStatus === 'active' && !isSubmitting) {
         e.preventDefault();
         e.returnValue = '';
         return '';
