@@ -219,6 +219,9 @@ def auto_submit_exam(exam_id: str, student_id: str, answers: Dict) -> Optional[s
     Returns:
         Submission ID if successful, None otherwise
     """
+    if not answers or len(answers) == 0:
+        return None
+    
     submission_data = {
         "exam_id": exam_id,
         "student_id": student_id,
@@ -232,3 +235,11 @@ def auto_submit_exam(exam_id: str, student_id: str, answers: Dict) -> Optional[s
     doc_ref.set(submission_data)
 
     return doc_ref.id
+
+def has_student_started_exam(exam_id: str, student_id: str) -> bool:
+    """Check if student has any saved answers (started the exam)"""
+    try:
+        doc = db.collection("drafts").document(f"{exam_id}_{student_id}").get()
+        return doc.exists
+    except:
+        return False
