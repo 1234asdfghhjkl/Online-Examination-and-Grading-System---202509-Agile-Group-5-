@@ -10,6 +10,7 @@ from services.question_service import (
     delete_mcq_question,
 )
 
+
 def _parse_form(body: str) -> dict:
     data = parse_qs(body)
 
@@ -155,6 +156,7 @@ def get_mcq_builder(exam_id: str):
         },
     )
     return html_str, 200
+
 
 def post_mcq_builder(exam_id: str, body: str):
     form = _parse_form(body)
@@ -345,7 +347,7 @@ def post_mcq_done(exam_id: str, body: str):
         }
         html_str = render("mcq_builder.html", ctx)
         return html_str, 400
-        
+
     questions = get_mcq_questions_by_exam(exam_id)
 
     if not questions:
@@ -388,6 +390,7 @@ def post_mcq_done(exam_id: str, body: str):
     </html>
     """
     return html_str, 200
+
 
 def get_mcq_edit(exam_id: str):
     html_str, status = get_mcq_builder(exam_id)

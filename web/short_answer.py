@@ -340,6 +340,7 @@ def post_short_done(exam_id: str, body: str):
     """
     return html_str, 200
 
+
 def get_short_edit(exam_id: str):
     return get_short_builder(exam_id)
 

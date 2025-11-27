@@ -21,7 +21,7 @@ class Handler(BaseHTTPRequestHandler):
     # ---------- GET ----------
 
     def do_GET(self):
-        if  self.path in ("/","/exams"):
+        if self.path in ("/", "/exams"):
             html_str, status = exams.get_exam_list()
             self._send_html(html_str, status)
         elif self.path == "/create-exam":

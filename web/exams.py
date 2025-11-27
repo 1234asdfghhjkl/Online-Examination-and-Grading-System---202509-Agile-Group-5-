@@ -48,36 +48,43 @@ def get_create_exam():
     )
     return html_str, 200
 
+
 def get_exam_edit(exam_id: str):
     if not exam_id:
-        html_str = render("exam_edit.html", {
-            "exam_id": "",
-            "title": "",
-            "description": "",
-            "duration": "",
-            "exam_date": "",
-            "instructions": "",
-            "errors_html": "",
-            "success_html": "",
-        })
+        html_str = render(
+            "exam_edit.html",
+            {
+                "exam_id": "",
+                "title": "",
+                "description": "",
+                "duration": "",
+                "exam_date": "",
+                "instructions": "",
+                "errors_html": "",
+                "success_html": "",
+            },
+        )
         return html_str, 400
 
     exam = get_exam_by_id(exam_id)
     if not exam:
-        html_str = render("exam_edit.html", {
-            "exam_id": exam_id,
-            "title": "Exam not found",
-            "description": "",
-            "duration": "",
-            "exam_date": "",
-            "instructions": "",
-            "errors_html": """
+        html_str = render(
+            "exam_edit.html",
+            {
+                "exam_id": exam_id,
+                "title": "Exam not found",
+                "description": "",
+                "duration": "",
+                "exam_date": "",
+                "instructions": "",
+                "errors_html": """
                 <div class="alert alert-danger mb-3">
                     Exam not found.
                 </div>
             """,
-            "success_html": "",
-        })
+                "success_html": "",
+            },
+        )
         return html_str, 404
 
     ctx = {
@@ -92,8 +99,6 @@ def get_exam_edit(exam_id: str):
     }
     html_str = render("exam_edit.html", ctx)
     return html_str, 200
-
-
 
 
 # ---------- POST handlers ----------
@@ -205,6 +210,7 @@ def post_publish_exam(body: str):
     html_str = render("exam_published.html", ctx)
     return html_str, 200
 
+
 def post_exam_edit(exam_id: str, body: str):
     data = parse_qs(body)
 
@@ -242,13 +248,16 @@ def post_exam_edit(exam_id: str, body: str):
         return html_str, 400
 
     # Valid → update in Firestore
-    update_exam(exam_id, {
-        "title": title.strip(),
-        "description": description.strip(),
-        "duration": int(duration),
-        "exam_date": exam_date,
-        "instructions": instructions.strip(),
-    })
+    update_exam(
+        exam_id,
+        {
+            "title": title.strip(),
+            "description": description.strip(),
+            "duration": int(duration),
+            "exam_date": exam_date,
+            "instructions": instructions.strip(),
+        },
+    )
 
     success_html = """
     <div class="alert alert-success mb-3">
@@ -268,6 +277,7 @@ def post_exam_edit(exam_id: str, body: str):
     }
     html_str = render("exam_edit.html", ctx)
     return html_str, 200
+
 
 def get_exam_review(exam_id: str):
     if not exam_id:
@@ -382,6 +392,7 @@ def get_exam_published(exam_id: str):
     html_str = render("exam_published.html", ctx)
     return html_str, 200
 
+
 def get_exam_list():
     exams = get_all_exams()
     exams_html = _build_exams_table_html(exams)
@@ -393,6 +404,7 @@ def get_exam_list():
     }
     html_str = render("exam_list.html", ctx)
     return html_str, 200
+
 
 def post_exam_delete(body: str):
     data = parse_qs(body)

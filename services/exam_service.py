@@ -83,6 +83,7 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
 
     return None
 
+
 def get_all_exams() -> List[Dict]:
     exams: List[Dict] = []
     try:
@@ -96,6 +97,7 @@ def get_all_exams() -> List[Dict]:
         exams.append(data)
 
     return exams
+
 
 def update_exam(exam_id: str, data: Dict[str, Any]) -> None:
     """
