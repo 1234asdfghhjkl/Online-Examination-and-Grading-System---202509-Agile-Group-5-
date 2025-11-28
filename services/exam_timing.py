@@ -241,5 +241,5 @@ def has_student_started_exam(exam_id: str, student_id: str) -> bool:
     try:
         doc = db.collection("drafts").document(f"{exam_id}_{student_id}").get()
         return doc.exists
-    except:
+    except Exception:
         return False

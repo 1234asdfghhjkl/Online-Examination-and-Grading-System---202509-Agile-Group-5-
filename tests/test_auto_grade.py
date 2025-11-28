@@ -1,6 +1,6 @@
 # tests/test_auto_grade.py
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Import the function under test
 from services.grading_service import grade_mcq_submission

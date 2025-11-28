@@ -1,6 +1,6 @@
 # tests/test_mcq.py
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 # Import the function you want to test
