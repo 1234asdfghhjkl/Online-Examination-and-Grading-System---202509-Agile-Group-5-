@@ -113,6 +113,10 @@ def post_edit_exam(body: str):
         ctx["start_time"] = form["start_time"]
         ctx["end_time"] = form["end_time"]
         ctx["errors_html"] = errors_html
+        
+        # --- FIX: Ensure success_html is present in the context on failure ---
+        ctx["success_html"] = "" 
+        
         html_str = render("exam_edit.html", ctx)
         return html_str, 400
 

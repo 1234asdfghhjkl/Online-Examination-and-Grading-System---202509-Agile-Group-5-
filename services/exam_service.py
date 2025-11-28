@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, Dict
 import secrets
+from firebase_admin import firestore
 
 from core.firebase_db import db
 
@@ -129,7 +130,6 @@ def get_all_exams() -> list:
     """
     Fetches all exams (both draft and published)
     """
-    from firebase_admin import firestore
 
     query = (
         db.collection("exams")
