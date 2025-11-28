@@ -91,7 +91,7 @@ def get_grade_submissions(exam_id: str):
                     '<span class="status-badge graded">✅ Fully Graded</span>'
                 )
                 action_btn = f"""
-                <a href="/view-graded-submission?submission_id={submission_id}" 
+                <a href="" 
                    class="btn btn-sm btn-outline-success">
                     View Results
                 </a>

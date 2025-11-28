@@ -5,13 +5,18 @@
     <title>All Exams - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply the font to the whole body */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
     <div class="container">
-        <span class="navbar-brand fw-bold">📚 Exam Management System</span>
+        <span class="navbar-brand fw-bold">📚 Online Exam System</span> 
         <div>
-            <a href="/create-exam" class="btn btn-light btn-sm">+ Create New Exam</a>
+            <a href="/create-exam" class="btn btn-light btn-sm btn-rounded fw-bold">+ Create New Exam</a>
         </div>
     </div>
 </nav>
@@ -20,8 +25,8 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             
-            <div class="card p-4 mb-4 border-0 shadow-sm bg-light">
-                <h4 class="mb-1">All Exams</h4>
+            <div class="list-header">
+                <h4 class="mb-1 fw-bold">All Exams</h4>
                 <p class="text-muted mb-0">Manage your exams, questions, and publishing</p>
             </div>
 
@@ -31,5 +36,6 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

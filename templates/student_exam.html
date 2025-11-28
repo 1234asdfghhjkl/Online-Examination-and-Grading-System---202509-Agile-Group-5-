@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>{{exam_title}} - Student View</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/student.css">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -16,6 +16,27 @@
             margin: 0 auto;
             padding: 2rem 1rem;
         }
+        
+        /* NEW/MODIFIED STYLES FOR TOP HEADER */
+        .exam-header-top {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); /* Flipped gradient for variety */
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: left;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2rem; /* Add space before the main card */
+        }
+        .exam-header-top h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .exam-header-top p {
+            opacity: 0.95;
+            font-size: 1.1rem;
+        }
+        /* END NEW STYLES */
         
         .timer-display {
             position: fixed;
@@ -52,23 +73,7 @@
             margin-bottom: 2rem;
         }
         
-        .exam-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-        }
-        
-        .exam-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        
-        .exam-header p {
-            opacity: 0.95;
-            font-size: 1.1rem;
-        }
+        /* ORIGINAL exam-header STYLES REMOVED as it is no longer part of .exam-card */
         
         .exam-body {
             padding: 3rem 2.5rem;
@@ -257,7 +262,8 @@
             margin: 2rem 0;
         }
         
-        /* Custom Modal Styles */
+        /* Custom Modal Styles (omitted for brevity) */
+        /* ... */
         .custom-modal {
             display: none;
             position: fixed;
@@ -380,18 +386,23 @@
 </div>
 
 <div class="exam-container">
-    <div class="exam-card">
-        <div class="exam-header">
-            <h1>📝 {{exam_title}}</h1>
-            <p>{{exam_description}}</p>
-            <div class="mt-3 text-white-50 small">
-                Student: {{student_name}} • ID: {{student_id}}
-            </div>
+    
+    <div class="exam-header-top">
+        <h1>📝 {{exam_title}}</h1>
+        <p>{{exam_description}}</p>
+        <div class="mt-3 text-white-50 small">
+            Student: {{student_name}} • ID: {{student_id}}
         </div>
-        
+    </div>
+    
+    <div id="instructions-box" class="info-box mb-4">
+        <h6 class="fw-bold mb-2">📋 Instructions</h6>
+        <p style="white-space: pre-wrap;" class="mb-0">{{instructions}}</p>
+    </div>
+
+    <div class="exam-card">
         <div class="exam-body">
             
-            <!-- Before Exam Starts -->
             <div id="before-start-section" style="display: none;">
                 <div class="text-center">
                     <span class="status-badge waiting">
@@ -407,13 +418,8 @@
                     <p class="text-muted mb-0">The exam will automatically become available at the scheduled time.</p>
                 </div>
                 
-                <div class="info-box">
-                    <h6 class="fw-bold mb-2">📋 Instructions</h6>
-                    <p style="white-space: pre-wrap;" class="mb-0">{{instructions}}</p>
                 </div>
-            </div>
 
-            <!-- Exam Active -->
             <div id="exam-active-section" style="display: none;">
                 <div class="text-center">
                     <span class="status-badge active">
@@ -448,7 +454,6 @@
                 </form>
             </div>
 
-            <!-- Exam Ended -->
             <div id="exam-ended-section" style="display: none;">
                 <div class="text-center">
                     <span class="status-badge ended">
@@ -463,7 +468,6 @@
                 </div>
             </div>
 
-            <!-- Already Submitted -->
             <div id="already-submitted-section" style="display: none;">
                 <div class="text-center">
                     <span class="status-badge submitted">
@@ -488,7 +492,6 @@
     </div>
 </div>
 
-<!-- Custom Confirmation Modal -->
 <div id="submit-modal" class="custom-modal">
     <div class="modal-content-custom">
         <div class="modal-icon">
@@ -510,6 +513,8 @@
 </div>
 
 <script>
+// ... (Your JavaScript remains the same)
+
 const CONFIG = {
     examId: '{{exam_id}}',
     studentId: '{{student_id}}',
@@ -679,6 +684,10 @@ function initialize() {
         examStatus === 'ended' ? 'block' : 'none';
     document.getElementById('already-submitted-section').style.display = 
         examStatus === 'submitted' ? 'block' : 'none';
+        
+    // Hide instructions if exam is active/ended/submitted
+    document.getElementById('instructions-box').style.display = 
+        examStatus === 'active' || examStatus === 'ended' || examStatus === 'submitted' ? 'none' : 'block';
     
     if (examStatus === 'active' || examStatus === 'before_start') {
         updateTimer();

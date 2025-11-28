@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Exam</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="bg-light">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Edit Exam</h3>
+            <a href="/exam-list" class="btn btn-outline-secondary btn-sm">
+                ← Back to exam list
+            </a>
+        </div>
+
+        {{errors_html}}
+        {{success_html}}
+
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <form action="/exam-edit?exam_id={{exam_id}}" method="POST">
+                    <input type="hidden" name="exam_id" value="{{exam_id}}">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Exam Date</label>
+                        <input type="date" name="exam_date" class="form-control" value="{{exam_date}}" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Exam Title</label>
+                            <input type="text" name="title" class="form-control" value="{{title}}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Start Time</label>
+                            <input type="time" name="start_time" id="start_time" class="form-control"
+                                value="{{start_time}}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">End Time</label>
+                            <input type="time" name="end_time" id="end_time" class="form-control" value="{{end_time}}"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Duration (minutes)</label>
+                            <input type="number" name="duration" id="duration" min="1" class="form-control"
+                                value="{{duration}}" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="description" rows="2" class="form-control">{{description}}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Instructions for Students</label>
+                            <textarea name="instructions" rows="3" class="form-control">{{instructions}}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="submit" class="btn btn-primary btn-rounded">
+                            Save changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const startTimeInput = document.getElementById('start_time');
+            const endTimeInput = document.getElementById('end_time');
+            const durationInput = document.getElementById('duration');
+
+            // Ensure inputs have IDs for the script to find them (Title is missing ID but is fine)
+            startTimeInput.id = 'start_time';
+            endTimeInput.id = 'end_time';
+            durationInput.id = 'duration';
+
+
+            // Helper: Convert time string (HH:MM) to minutes from midnight
+            function timeToMinutes(timeStr) {
+                if (!timeStr) return null;
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+            }
+
+            // Helper: Convert minutes from midnight to time string (HH:MM)
+            function minutesToTime(minutes) {
+                const hours = Math.floor(minutes / 60) % 24;
+                const mins = minutes % 60;
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+            }
+
+            // Calculate End Time from Start Time + Duration
+            function calculateEndTime() {
+                const startTime = startTimeInput.value;
+                const duration = parseInt(durationInput.value);
+
+                if (startTime && duration > 0) {
+                    const startMinutes = timeToMinutes(startTime);
+                    const endMinutes = startMinutes + duration;
+                    endTimeInput.value = minutesToTime(endMinutes);
+                }
+            }
+
+            // Calculate Duration from Start Time and End Time
+            function calculateDuration() {
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
+
+                if (startTime && endTime) {
+                    const startMinutes = timeToMinutes(startTime);
+                    let endMinutes = timeToMinutes(endTime);
+
+                    // Handle cases where end time is on the next day (e.g., 23:00 to 01:00)
+                    if (endMinutes <= startMinutes) {
+                        endMinutes += 24 * 60; // Add 24 hours
+                    }
+
+                    const duration = endMinutes - startMinutes;
+                    if (duration > 0) {
+                        durationInput.value = duration;
+                    }
+                }
+            }
+
+            // Event listeners
+            startTimeInput.addEventListener('change', calculateEndTime);
+            durationInput.addEventListener('input', calculateEndTime);
+            endTimeInput.addEventListener('change', calculateDuration);
+
+            // Initial calculation on page load if values exist
+            if (startTimeInput.value && durationInput.value) {
+                // Calculate End Time on load, as Duration is the source of truth when loading existing data
+                calculateEndTime();
+            }
+        })();
+    </script>
+</body>
+
+</html>
