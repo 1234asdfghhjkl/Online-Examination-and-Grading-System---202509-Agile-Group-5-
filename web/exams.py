@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs
 import html
 
-from core.validation import validate_exam, validate_exam_date
+from core.validation import validate_exam, validate_exam_date, validate_exam_times
 from services.exam_service import save_exam_draft, publish_exam, get_exam_by_id
 from services.question_service import has_mcq_for_exam, has_short_for_exam
 from .template_engine import render
@@ -45,17 +45,113 @@ def get_create_exam():
     )
     return html_str, 200
 
+def get_edit_exam(exam_id: str):
+    if not exam_id:
+        # Redirect to exam list or show error if no ID is provided
+        # For simplicity, we'll return an error page template
+        html_str = render("exam_edit.html", {"errors_html": '<div class="alert alert-danger">Error: Exam ID is missing.</div>'})
+        return html_str, 400
+
+    exam = get_exam_by_id(exam_id)
+    
+    if not exam:
+        html_str = render("exam_edit.html", {"errors_html": f'<div class="alert alert-danger">Error: Exam ID "{exam_id}" not found.</div>'})
+        return html_str, 404
+
+    # Build context from exam data
+    ctx = {
+        "exam_id": exam.get("exam_id", exam_id),
+        "title": exam.get("title", ""),
+        "description": exam.get("description", ""),
+        "duration": str(exam.get("duration", "")),
+        "exam_date": exam.get("exam_date", ""),
+        # Success and error messages are empty on initial load
+        "success_html": "", 
+        "errors_html": "",
+        # start_time and end_time are not used in exam_edit.html, but keep them for safety if other components use the context.
+        "start_time": exam.get("start_time", "00:00"), 
+        "end_time": exam.get("end_time", "01:00"),
+        "instructions": exam.get("instructions", ""),
+    }
+
+    html_str = render("exam_edit.html", ctx)
+    return html_str, 200
 
 # ---------- POST handlers ----------
 
 
 def post_edit_exam(body: str):
     form = _parse_form(body)
-    ctx = dict(form)
-    ctx["errors_html"] = ""
-    html_str = render("create_exam.html", ctx)
-    return html_str, 200
+    exam_id = form.get("exam_id")
+    
+    if not exam_id:
+        # Check if exam_id is provided
+        ctx = dict(form)
+        ctx["errors_html"] = '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        html_str = render("exam_edit.html", ctx)
+        return html_str, 400
 
+    # 1. Validation (now includes time validation)
+    errors = validate_exam(
+        form["title"], form["description"], form["duration"], form["instructions"]
+    )
+    errors.extend(validate_exam_date(form["exam_date"]))
+    # NEW: Validate times, as they are now submitted by the form
+    errors.extend(validate_exam_times(form["start_time"], form["end_time"], form["duration"])) 
+
+    # 2. Handle errors
+    if errors:
+        error_items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
+        errors_html = f"""
+        <div class="alert alert-danger mb-3">
+            <strong>Please fix the following:</strong>
+            <ul class="mb-0">{error_items}</ul>
+        </div>
+        """
+        ctx = dict(form)
+        # We need to ensure the times are in the context for rendering the error page
+        ctx["start_time"] = form["start_time"]
+        ctx["end_time"] = form["end_time"]
+        ctx["errors_html"] = errors_html
+        html_str = render("exam_edit.html", ctx)
+        return html_str, 400
+
+    # 3. Valid: Save/update draft in DB
+    try:
+        save_exam_draft(
+            exam_id=exam_id,
+            title=form["title"],
+            description=form["description"],
+            duration=form["duration"],
+            instructions=form["instructions"],
+            exam_date=form["exam_date"],
+            start_time=form["start_time"], # <-- Use submitted time
+            end_time=form["end_time"],     # <-- Use submitted time
+        )
+        
+        # 4. Success
+        success_html = """
+        <div class="alert alert-success mb-3">
+            <strong>Success!</strong> Exam details saved.
+        </div>
+        """
+        ctx = dict(form)
+        ctx["success_html"] = success_html
+        ctx["errors_html"] = "" # Clear errors on success
+        html_str = render("exam_edit.html", ctx)
+        return html_str, 200
+        
+    except ValueError as e:
+        # Handle cases where save_exam_draft might raise an exception
+        errors_html = f"""
+        <div class="alert alert-danger mb-3">
+            <strong>Database Error:</strong> {html.escape(str(e))}
+        </div>
+        """
+        ctx = dict(form)
+        ctx["errors_html"] = errors_html
+        html_str = render("exam_edit.html", ctx)
+        return html_str, 500
 
 def post_publish_exam(body: str):
     form = _parse_form(body)
@@ -271,7 +367,7 @@ def get_exam_published(exam_id: str):
 
 def get_exam_list():
     """
-    GET handler for listing all exams (admin view)
+    GET handler for listing all exams (admin view) - UPDATED FOR TIDY UI
     """
     from services.exam_service import get_all_exams
 
@@ -320,45 +416,44 @@ def get_exam_list():
 
             status = exam.get("status", "draft")
 
-            # Status badge
+            # --- TIDY UI LOGIC ---
             if status == "published":
-                status_badge = '<span class="badge bg-success">Published</span>'
+                status_badge = '<span class="exam-status status-published">Published</span>'
+                # UPDATED ACTIONS: Buttons are now on a single line and use the same small size
                 actions = f"""
-                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-outline-primary">View</a>
+                    <a href="/exam-edit?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Edit Details</a>
+                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-info">View</a>
                     <a href="/grade-submissions?exam_id={e_id}" class="btn btn-sm btn-success">Grade</a>
                     <a href="/student-exam?exam_id={e_id}&student_id=test_student_01" 
-                        class="btn btn-sm btn-outline-success">Test as Student</a>
+                        class="btn btn-sm btn-outline-dark">Student Test</a>
                 """
             else:
-                status_badge = '<span class="badge bg-warning text-dark">Draft</span>'
+                status_badge = '<span class="exam-status status-draft">Draft</span>'
                 actions = f"""
-                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="/mcq-builder?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Add Questions</a>
+                    <a href="/exam-edit?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Edit Details</a>
+                    <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-primary">Add Questions / Review</a>
                 """
 
             exam_list_html += f"""
-            <div class="card mb-3 shadow-sm border-0">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h5 class="card-title mb-1">
-                                {title} {status_badge}
-                            </h5>
-                            <p class="text-muted small mb-2">{description}</p>
-                            <div class="text-muted small">
-                                <span class="me-3">📅 {date}</span>
-                                <span class="me-3">🕐 {start_time} - {end_time}</span>
-                                <span class="me-3">⏱️ {duration} mins</span>
-                                <span class="text-primary">ID: {e_id}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            {actions}
-                        </div>
+            <div class="exam-card">
+                <div class="exam-info">
+                    <h5 class="exam-title">
+                        {title} {status_badge}
+                    </h5>
+                    <p class="exam-desc">{description}</p>
+                    <div class="exam-meta">
+                        <span>📅 {date}</span>
+                        <span>🕐 {start_time} - {end_time}</span>
+                        <span>⏱️ {duration} mins</span>
+                        <span class="exam-id">ID: {e_id}</span>
                     </div>
+                </div>
+                <div class="exam-actions">
+                    {actions}
                 </div>
             </div>
             """
+        
 
     html_str = render("exam_list.html", {"exam_list_html": exam_list_html})
     return html_str, 200

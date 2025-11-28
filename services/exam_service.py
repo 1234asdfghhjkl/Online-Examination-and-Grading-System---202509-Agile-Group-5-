@@ -40,27 +40,28 @@ def save_exam_draft(
         "exam_date": exam_date.strip(),
         "start_time": start_time.strip(),
         "end_time": end_time.strip(),
-        "status": "draft",
+        # REMOVED: "status": "draft" from here so it doesn't overwrite published status
         "updated_at": datetime.utcnow(),
     }
 
     if exam_id:
-        # Update existing draft
+        # Update existing draft/published exam
         doc_ref = db.collection("exams").document(exam_id)
         
         # SECURITY CHECK: Verify exam exists before updating
         if not doc_ref.get().exists:
             raise ValueError(f"Exam {exam_id} does not exist")
+        # Status remains unchanged on update
     else:
         # Create new draft with unique exam_id
         exam_id = _generate_exam_id()
         doc_ref = db.collection("exams").document(exam_id)
         exam_data["exam_id"] = exam_id
         exam_data["created_at"] = datetime.utcnow()
+        exam_data["status"] = "draft" # <--- Status is only set here for new exams
 
     doc_ref.set(exam_data, merge=True)
     return exam_id
-
 
 def publish_exam(exam_id: str):
     if not exam_id:

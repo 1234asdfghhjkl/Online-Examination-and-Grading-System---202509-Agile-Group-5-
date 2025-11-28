@@ -37,6 +37,10 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/create-exam"):
             html_str, status = exams.get_create_exam()
             self._send_html(html_str, status)
+        elif path.startswith("/exam-edit"):
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = exams.get_edit_exam(exam_id)
+            self._send_html(html_str, status)
         elif path == "/exam-list":
             html_str, status = exams.get_exam_list()
             self._send_html(html_str, status)
@@ -124,9 +128,6 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/submit-exam":
             html_str, status = exams.post_submit_exam(body)
             self._send_html(html_str, status)
-        elif path == "/edit-exam":
-            html_str, status = exams.post_edit_exam(body)
-            self._send_html(html_str, status)
         elif path == "/publish-exam":
             html_str, status = exams.post_publish_exam(body)
             self._send_html(html_str, status)
@@ -153,6 +154,9 @@ class Handler(BaseHTTPRequestHandler):
         elif path.startswith("/short-delete"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.post_short_delete(exam_id, body)
+            self._send_html(html_str, status)
+        elif path.startswith("/exam-edit"): 
+            html_str, status = exams.post_edit_exam(body)
             self._send_html(html_str, status)
 
         # Student routes
