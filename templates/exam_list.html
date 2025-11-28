@@ -2,34 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>All Exams - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>All Exams</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
-    <div class="container">
-        <span class="navbar-brand fw-bold">📚 Exam Management System</span>
-        <div>
-            <a href="/create-exam" class="btn btn-light btn-sm">+ Create New Exam</a>
-        </div>
+<body class="bg-light">
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">All Exams</h3>
+        <a href="/create-exam" class="btn btn-primary btn-rounded btn-sm">
+            + Create New Exam
+        </a>
     </div>
-</nav>
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            
-            <div class="card p-4 mb-4 border-0 shadow-sm bg-light">
-                <h4 class="mb-1">All Exams</h4>
-                <p class="text-muted mb-0">Manage your exams, questions, and publishing</p>
-            </div>
+    {{errors_html}}
+    {{success_html}}
 
-            {{exam_list_html}}
-
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            {{exams_html}}
         </div>
     </div>
 </div>
-
 </body>
 </html>

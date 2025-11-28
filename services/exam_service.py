@@ -1,23 +1,13 @@
 from datetime import datetime
-from typing import Optional, Dict
-import secrets
+from typing import List, Dict, Optional, Any
 
 from core.firebase_db import db
 
 
 def _generate_exam_id() -> str:
-    """
-    Generate a unique exam ID using timestamp + random string
-    This prevents race conditions when multiple teachers create exams simultaneously
-    """
-    # Use timestamp for ordering + random string for uniqueness
-    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-    random_suffix = secrets.token_hex(3)  # 6 characters
-    return f"EID-{timestamp}-{random_suffix}"
-    
-    # Alternative approach: Use Firestore auto-generated IDs
-    # doc_ref = db.collection("exams").document()
-    # return doc_ref.id
+    exams = db.collection("exams").get()
+    next_number = len(exams) + 1
+    return f"EID-{next_number:03d}"
 
 
 def save_exam_draft(
@@ -27,8 +17,6 @@ def save_exam_draft(
     duration: str,
     instructions: str,
     exam_date: str,
-    start_time: str = "00:00",
-    end_time: str = "01:00",
 ) -> str:
     duration_int = int(duration)
 
@@ -38,8 +26,6 @@ def save_exam_draft(
         "duration": duration_int,
         "instructions": instructions.strip(),
         "exam_date": exam_date.strip(),
-        "start_time": start_time.strip(),
-        "end_time": end_time.strip(),
         "status": "draft",
         "updated_at": datetime.utcnow(),
     }
@@ -47,12 +33,8 @@ def save_exam_draft(
     if exam_id:
         # Update existing draft
         doc_ref = db.collection("exams").document(exam_id)
-        
-        # SECURITY CHECK: Verify exam exists before updating
-        if not doc_ref.get().exists:
-            raise ValueError(f"Exam {exam_id} does not exist")
     else:
-        # Create new draft with unique exam_id
+        # Create new draft with new exam_id as document ID
         exam_id = _generate_exam_id()
         doc_ref = db.collection("exams").document(exam_id)
         exam_data["exam_id"] = exam_id
@@ -91,7 +73,7 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
         data.setdefault("exam_id", exam_id)
         return data
 
-    # Case 2: exam_id is stored as a field (for backward compatibility)
+    # Case 2: exam_id is stored as a field
     query = db.collection("exams").where("exam_id", "==", exam_id).limit(1).stream()
 
     for doc in query:
@@ -102,44 +84,49 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
     return None
 
 
-def get_all_published_exams() -> list:
-    """
-    Fetches all exams with status 'published'
-    """
+def get_all_exams() -> List[Dict]:
+    exams: List[Dict] = []
     try:
-        query = db.collection("exams").where("status", "==", "published").stream()
+        query = db.collection("exams").order_by("created_at")
+    except Exception:
+        query = db.collection("exams")
 
-        exams = []
-        for doc in query:
-            data = doc.to_dict()
-            data["exam_id"] = doc.id
-            exams.append(data)
-
-        # Sort in Python instead
-        exams.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
-
-        return exams
-    except Exception as e:
-        print(f"Error fetching published exams: {e}")
-        return []
-
-
-def get_all_exams() -> list:
-    """
-    Fetches all exams (both draft and published)
-    """
-    from firebase_admin import firestore
-
-    query = (
-        db.collection("exams")
-        .order_by("created_at", direction=firestore.Query.DESCENDING)
-        .stream()
-    )
-
-    exams = []
-    for doc in query:
-        data = doc.to_dict()
-        data["exam_id"] = doc.id
+    for doc in query.stream():
+        data = doc.to_dict() or {}
+        data["exam_id"] = data.get("exam_id", doc.id)
         exams.append(data)
 
     return exams
+
+
+def update_exam(exam_id: str, data: Dict[str, Any]) -> None:
+    """
+    Update an existing exam document by exam_id.
+    """
+    if not exam_id:
+        return
+
+    data = data.copy()
+    data["exam_id"] = exam_id
+    data["updated_at"] = datetime.utcnow()
+
+    db.collection("exams").document(exam_id).set(data, merge=True)
+
+    docs = db.collection("exams").where("exam_id", "==", exam_id).stream()
+    for d in docs:
+        d.reference.set(data, merge=True)
+
+
+def delete_exam_and_questions(exam_id: str) -> None:
+    if not exam_id:
+        return
+
+    q_query = db.collection("questions").where("exam_id", "==", exam_id).stream()
+    for q_doc in q_query:
+        q_doc.reference.delete()
+
+    db.collection("exams").document(exam_id).delete()
+
+    e_query = db.collection("exams").where("exam_id", "==", exam_id).stream()
+    for e_doc in e_query:
+        e_doc.reference.delete()
