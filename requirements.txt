@@ -1,7 +1,7 @@
-pip install python-dotenv
-pip install firebase-admin
-pip install black ruff
-pip install pytest pytest-mock
+python-dotenv
+firebase-admin
+black
+ruff
 pytest
 pytest-mock
 pytest-cov
