@@ -1,7 +1,0 @@
-python-dotenv
-firebase-admin
-black
-ruff
-pytest
-pytest-mock
-pytest-cov
