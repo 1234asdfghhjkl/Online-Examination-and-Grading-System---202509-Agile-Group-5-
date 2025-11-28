@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Results - {{exam_title}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .result-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem 1rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .result-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .result-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .score-display {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin: 1rem 0;
+        }
+
+        .result-body {
+            padding: 3rem 2.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 2px solid #3b82f6;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-color: #10b981;
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            border-color: #ef4444;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-color: #f59e0b;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .question-review {
+            margin-top: 2rem;
+        }
+
+        .question-item {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .question-item.correct {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        }
+
+        .question-item.incorrect {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+        }
+
+        .question-item.unanswered {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        }
+
+        .question-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-icon {
+            font-size: 1.5rem;
+        }
+
+        .answer-info {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="result-container">
+        <div class="result-card">
+            <div class="result-header">
+                <h1>🎉 Exam Completed!</h1>
+                <p>{{exam_title}}</p>
+                <div class="score-display">
+                    {{obtained_marks}}/{{total_marks}}
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 600;">
+                    {{percentage}}%
+                </div>
+            </div>
+
+            <div class="result-body">
+                <div class="stats-grid">
+                    <div class="stat-card success">
+                        <div class="stat-value">{{correct_answers}}</div>
+                        <div class="stat-label">✅ Correct</div>
+                    </div>
+
+                    <div class="stat-card danger">
+                        <div class="stat-value">{{incorrect_answers}}</div>
+                        <div class="stat-label">❌ Incorrect</div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-value">{{unanswered}}</div>
+                        <div class="stat-label">⚠️ Unanswered</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-value">{{total_questions}}</div>
+                        <div class="stat-label">📝 Total Questions</div>
+                    </div>
+                </div>
+
+                <hr style="margin: 2rem 0;">
+
+                <h4 class="mb-4" style="color: #667eea; font-weight: 700;">📊 Question-by-Question Review</h4>
+
+                <div class="question-review">
+                    {{questions_review_html}}
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="/student-dashboard?student_id={{student_id}}" class="btn btn-primary btn-lg">
+                        🏠 Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

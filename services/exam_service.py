@@ -1,13 +1,24 @@
 from datetime import datetime
 from typing import List, Dict, Optional, Any
+from typing import Optional, Dict
+import secrets
 
 from core.firebase_db import db
 
 
 def _generate_exam_id() -> str:
-    exams = db.collection("exams").get()
-    next_number = len(exams) + 1
-    return f"EID-{next_number:03d}"
+    """
+    Generate a unique exam ID using timestamp + random string
+    This prevents race conditions when multiple teachers create exams simultaneously
+    """
+    # Use timestamp for ordering + random string for uniqueness
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    random_suffix = secrets.token_hex(3)  # 6 characters
+    return f"EID-{timestamp}-{random_suffix}"
+    
+    # Alternative approach: Use Firestore auto-generated IDs
+    # doc_ref = db.collection("exams").document()
+    # return doc_ref.id
 
 
 def save_exam_draft(
@@ -17,6 +28,8 @@ def save_exam_draft(
     duration: str,
     instructions: str,
     exam_date: str,
+    start_time: str = "00:00",
+    end_time: str = "01:00",
 ) -> str:
     duration_int = int(duration)
 
@@ -26,6 +39,8 @@ def save_exam_draft(
         "duration": duration_int,
         "instructions": instructions.strip(),
         "exam_date": exam_date.strip(),
+        "start_time": start_time.strip(),
+        "end_time": end_time.strip(),
         "status": "draft",
         "updated_at": datetime.utcnow(),
     }
@@ -33,8 +48,12 @@ def save_exam_draft(
     if exam_id:
         # Update existing draft
         doc_ref = db.collection("exams").document(exam_id)
+        
+        # SECURITY CHECK: Verify exam exists before updating
+        if not doc_ref.get().exists:
+            raise ValueError(f"Exam {exam_id} does not exist")
     else:
-        # Create new draft with new exam_id as document ID
+        # Create new draft with unique exam_id
         exam_id = _generate_exam_id()
         doc_ref = db.collection("exams").document(exam_id)
         exam_data["exam_id"] = exam_id
@@ -73,7 +92,7 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
         data.setdefault("exam_id", exam_id)
         return data
 
-    # Case 2: exam_id is stored as a field
+    # Case 2: exam_id is stored as a field (for backward compatibility)
     query = db.collection("exams").where("exam_id", "==", exam_id).limit(1).stream()
 
     for doc in query:
@@ -130,3 +149,44 @@ def delete_exam_and_questions(exam_id: str) -> None:
     e_query = db.collection("exams").where("exam_id", "==", exam_id).stream()
     for e_doc in e_query:
         e_doc.reference.delete()
+def get_all_published_exams() -> list:
+    """
+    Fetches all exams with status 'published'
+    """
+    try:
+        query = db.collection("exams").where("status", "==", "published").stream()
+
+        exams = []
+        for doc in query:
+            data = doc.to_dict()
+            data["exam_id"] = doc.id
+            exams.append(data)
+
+        # Sort in Python instead
+        exams.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+
+        return exams
+    except Exception as e:
+        print(f"Error fetching published exams: {e}")
+        return []
+
+
+def get_all_exams() -> list:
+    """
+    Fetches all exams (both draft and published)
+    """
+    from firebase_admin import firestore
+
+    query = (
+        db.collection("exams")
+        .order_by("created_at", direction=firestore.Query.DESCENDING)
+        .stream()
+    )
+
+    exams = []
+    for doc in query:
+        data = doc.to_dict()
+        data["exam_id"] = doc.id
+        exams.append(data)
+
+    return exams
