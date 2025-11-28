@@ -1,5 +1,4 @@
 # tests/test_timing.py
-import pytest
 from datetime import datetime, timedelta, timezone
 from services import exam_timing
 
@@ -20,7 +19,7 @@ def test_exam_access_before_start(mocker, mock_firestore):
     """Test access denied before exam starts"""
     # 1. Setup Data
     exam_id = "exam_123"
-    exam_start = datetime(2025, 12, 1, 10, 0, tzinfo=MALAYSIA_TZ)
+    #exam_start = datetime(2025, 12, 1, 10, 0, tzinfo=MALAYSIA_TZ)
     
     # 2. Mock DB response
     mock_exam_doc = {
