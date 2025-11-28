@@ -6,7 +6,7 @@ Handles automatic grading of MCQ questions
 """
 
 from typing import Dict, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.firebase_db import db
 from services.question_service import get_mcq_questions_by_exam
@@ -96,7 +96,7 @@ def grade_mcq_submission(exam_id: str, student_id: str, answers: Dict) -> Dict:
         "incorrect_answers": incorrect_count,
         "unanswered": unanswered_count,
         "question_results": question_results,
-        "graded_at": datetime.utcnow(),
+        "graded_at": datetime.now(timezone.utc),
     }
 
     return grading_result
