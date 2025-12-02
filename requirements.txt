@@ -5,3 +5,4 @@ ruff
 pytest
 pytest-mock
 pytest-cov
+reportlab

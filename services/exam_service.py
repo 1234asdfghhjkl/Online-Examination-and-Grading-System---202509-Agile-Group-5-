@@ -144,3 +144,59 @@ def get_all_exams() -> list:
         exams.append(data)
 
     return exams
+
+
+# Admin side get exam list and set result release date
+def set_result_release_date(exam_id: str, release_date: str, release_time: str = "00:00"):
+    """
+    Set the result release date and time for an exam
+    """
+    if not exam_id:
+        raise ValueError("Missing exam ID.")
+    
+    doc_ref = db.collection("exams").document(exam_id)
+    snap = doc_ref.get()
+    if not snap.exists:
+        raise ValueError(f"Exam '{exam_id}' does not exist.")
+    
+    from datetime import datetime
+    
+    # Validate date format
+    try:
+        datetime.strptime(release_date, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Invalid date format. Use YYYY-MM-DD.")
+    
+    # Validate time format
+    try:
+        datetime.strptime(release_time, "%H:%M")
+    except ValueError:
+        raise ValueError("Invalid time format. Use HH:MM.")
+    
+    doc_ref.update({
+        "result_release_date": release_date,
+        "result_release_time": release_time,
+        "result_release_updated_at": datetime.utcnow(),
+    })
+
+
+def get_all_published_exams_for_admin() -> list:
+    """
+    Fetches all published exams for admin result management
+    """
+    try:
+        query = db.collection("exams").where("status", "==", "published").stream()
+
+        exams = []
+        for doc in query:
+            data = doc.to_dict()
+            data["exam_id"] = doc.id
+            exams.append(data)
+
+        # Sort by exam date
+        exams.sort(key=lambda x: x.get("exam_date", ""), reverse=True)
+
+        return exams
+    except Exception as e:
+        print(f"Error fetching published exams: {e}")
+        return []

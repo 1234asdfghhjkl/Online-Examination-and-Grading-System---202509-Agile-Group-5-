@@ -115,13 +115,16 @@ def _build_questions_html(exam_id: str) -> str:
 
 def get_student_dashboard(student_id: str):
     """
-    Renders the student dashboard with a list of available exams
+    Renders the student dashboard with a list of available exams and submissions
     """
+    from services.student_submission_service import get_student_submissions
+    
     published_exams = get_all_published_exams()
 
     # If no student ID is provided, default to a test one
     current_student_id = student_id if student_id else "test_student_01"
 
+    # Build available exams HTML
     exam_list_html = ""
     if not published_exams:
         exam_list_html = """
@@ -135,7 +138,9 @@ def get_student_dashboard(student_id: str):
             title = html.escape(exam.get("title", "Untitled"))
             duration = exam.get("duration", 0)
             date = exam.get("exam_date", "N/A")
-            time = exam.get("exam_time", "N/A")
+            
+            # Handle both old and new time formats
+            start_time = exam.get("start_time", exam.get("exam_time", "N/A"))
 
             exam_list_html += f"""
             <div class="col-md-6 mb-4">
@@ -143,7 +148,7 @@ def get_student_dashboard(student_id: str):
                     <div class="card-body">
                         <h5 class="card-title fw-bold text-primary">{title}</h5>
                         <div class="text-muted small mb-3">
-                            <div>📅 Date: {date} at {time}</div>
+                            <div>📅 Date: {date} at {start_time}</div>
                             <div>⏱️ Duration: {duration} mins</div>
                         </div>
                         <a href="/student-exam?exam_id={e_id}&student_id={current_student_id}" 
@@ -154,10 +159,91 @@ def get_student_dashboard(student_id: str):
                 </div>
             </div>
             """
+    
+    # Build submissions HTML
+    submissions = get_student_submissions(current_student_id)
+    submissions_html = ""
+    
+    if not submissions:
+        submissions_html = """
+        <div class="alert alert-info">
+            <p class="mb-0">You haven't submitted any exams yet.</p>
+        </div>
+        """
+    else:
+        for sub in submissions:
+            exam_title = html.escape(sub.get("exam_title", "Unknown Exam"))
+            exam_date = sub.get("exam_date", "N/A")
+            submitted_at = sub.get("submitted_at")
+            
+            if isinstance(submitted_at, datetime):
+                submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M")
+            else:
+                submitted_time = "N/A"
+            
+            exam_id = sub.get("exam_id")
+            results_released = sub.get("results_released", False)
+            release_date = sub.get("release_date")
+            release_time = sub.get("release_time", "00:00")
+            
+            if results_released:
+                status_badge = '<span class="status-badge status-released">✅ Results Available</span>'
+                action_button = f"""
+                <a href="/student-result?exam_id={exam_id}&student_id={current_student_id}" 
+                   class="btn btn-success btn-sm">
+                    View Results
+                </a>
+                """
+                score_display = f"""
+                <div class="mt-2">
+                    <strong>Score:</strong> {sub.get('overall_percentage', 0)}%
+                </div>
+                """
+            else:
+                status_badge = '<span class="status-badge status-pending">⏳ Results Pending</span>'
+                if release_date:
+                    release_display = f"{release_date} at {release_time}"
+                    action_button = f"""
+                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                        Results on {release_display}
+                    </button>
+                    """
+                else:
+                    action_button = """
+                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                        Results Not Yet Scheduled
+                    </button>
+                    """
+                score_display = ""
+            
+            submissions_html += f"""
+            <div class="submission-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-2">
+                            <strong>{exam_title}</strong>
+                            {status_badge}
+                        </h6>
+                        <div class="text-muted small">
+                            <div>📅 Exam Date: {exam_date}</div>
+                            <div>📤 Submitted: {submitted_time}</div>
+                            {score_display}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        {action_button}
+                    </div>
+                </div>
+            </div>
+            """
 
     html_str = render(
         "student_dashboard.html",
-        {"student_id": current_student_id, "exam_list_html": exam_list_html},
+        {
+            "student_id": current_student_id,
+            "exam_list_html": exam_list_html,
+            "submissions_html": submissions_html,
+        },
     )
     return html_str, 200
 
@@ -301,12 +387,19 @@ def post_submit_student_exam(body: str):
     save_grading_result(submission_id, grading_result)
 
     # Redirect to results page
+    #success_html = f"""
+    #<html>
+    #  <head>
+    #    <meta http-equiv="refresh" content="0; url=/exam-result?exam_id={exam_id}&student_id={student_id}">
+    #  </head>
+    #  <body>Grading your exam...</body>
+    #</html>
     success_html = f"""
     <html>
       <head>
-        <meta http-equiv="refresh" content="0; url=/exam-result?exam_id={exam_id}&student_id={student_id}">
+        <meta http-equiv="refresh" content="0; url=/student-dashboard?student_id={student_id}">
       </head>
-      <body>Grading your exam...</body>
+      <body>Submission successful. Redirecting to dashboard...</body>
     </html>
     """
     return success_html, 200

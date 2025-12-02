@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def validate_exam(title: str, description: str, duration: str, instructions: str):
@@ -79,5 +79,40 @@ def validate_exam_times(start_time: str, end_time: str, duration: str):
 
         except (ValueError, AttributeError):
             errors.append("Invalid time format.")
+
+    return errors
+
+
+def validate_result_release_date(release_date: str, exam_date: str = None):
+    """
+    Validate result release date
+    Optionally check if it's after the exam date
+    """
+    errors = []
+
+    if not release_date:
+        errors.append("Result release date is required.")
+        return errors
+
+    try:
+        selected_date = datetime.strptime(release_date, "%Y-%m-%d").date()
+        today = datetime.today().date()
+        
+        # Allow past dates for exams that have already occurred
+        # but warn if it's too far in the past
+        if selected_date < today - timedelta(days=365):
+            errors.append("Result release date seems too far in the past.")
+        
+        # If exam_date is provided, ensure release date is on or after exam date
+        if exam_date:
+            try:
+                exam_dt = datetime.strptime(exam_date, "%Y-%m-%d").date()
+                if selected_date < exam_dt:
+                    errors.append("Result release date cannot be before the exam date.")
+            except ValueError:
+                pass  # If exam_date is invalid, skip this check
+                
+    except ValueError:
+        errors.append("Invalid result release date format.")
 
     return errors
