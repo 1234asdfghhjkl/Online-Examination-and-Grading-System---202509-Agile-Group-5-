@@ -88,7 +88,9 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now > deadline_dt:
-                        grading_status = '<span class="badge bg-danger ms-2"> Grading Closed</span>'
+                        grading_status = (
+                            '<span class="badge bg-danger ms-2"> Grading Closed</span>'
+                        )
                         grading_display = (
                             f"Closed on {grading_deadline} at {grading_time}"
                         )
@@ -290,7 +292,6 @@ def get_set_result_release(exam_id: str):
     return html_str, 200
 
 
-
 def post_set_result_release(body: str):
     """
     POST handler for setting result release date
@@ -392,6 +393,7 @@ def post_set_result_release(body: str):
         ctx["end_time"] = exam.get("end_time", "")
         html_str = render("set_result_release.html", ctx)
         return html_str, 500
+
 
 # ============================================================
 # NEW: COMPREHENSIVE GRADING SETTINGS

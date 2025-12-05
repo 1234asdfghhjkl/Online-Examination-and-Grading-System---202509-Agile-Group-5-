@@ -54,8 +54,20 @@ class Handler(BaseHTTPRequestHandler):
             html_str, status = exams.get_edit_exam(exam_id)
             self._send_html(html_str, status)
 
+        elif path == "/exam-delete":
+            exam_id = query.get("exam_id", [""])[0]
+            method = query.get("method", ["hard"])[0]
+            html_str, status = exams.get_exam_delete(exam_id, method)
+            self._send_html(html_str, status)
+
         elif path == "/exam-list":
-            html_str, status = exams.get_exam_list()
+            search = query.get("q", [""])[0]
+            sort = query.get("sort", ["date"])[0]
+            html_str, status = exams.get_exam_list(
+                success_message="",
+                search=search,
+                sort=sort,
+            )
             self._send_html(html_str, status)
 
         # ------------------------------

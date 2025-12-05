@@ -7,6 +7,8 @@ from services.exam_service import (
     publish_exam,
     get_exam_by_id,
     check_grading_locked,
+    soft_delete_exam,
+    delete_exam_and_contents,
 )
 from services.question_service import has_mcq_for_exam, has_short_for_exam
 from .template_engine import render
@@ -391,13 +393,64 @@ def get_exam_published(exam_id: str):
     return html_str, 200
 
 
-def get_exam_list():
+def get_exam_delete(exam_id: str, method: str = "hard"):
+    """
+    Delete exam flow:
+    - method='soft'  -> mark as deleted (keep data)
+    - method='hard'  -> remove exam and all related content
+    """
+    if not exam_id:
+        html_str = """
+        <div class="alert alert-danger mt-3">
+            <strong>Error:</strong> Missing exam ID.
+        </div>
+        <a href="/exam-list" class="btn btn-primary mt-2">Back to exams</a>
+        """
+        return html_str, 400
+
+    try:
+        if method == "soft":
+            soft_delete_exam(exam_id)
+            msg = "Exam removed from list."
+        else:
+            delete_exam_and_contents(exam_id)
+            msg = "Exam deleted successfully."
+    except ValueError as e:
+        html_str = f"""
+        <div class="alert alert-danger mt-3">
+            <strong>Could not delete exam:</strong> {html.escape(str(e))}
+        </div>
+        <a href="/exam-list" class="btn btn-primary mt-2">Back to exams</a>
+        """
+        return html_str, 404
+
+    return get_exam_list(success_message=msg)
+
+
+def get_exam_list(success_message: str = "", search: str = "", sort: str = "date"):
     """
     GET handler for listing all exams (admin view) - UPDATED FOR TIDY UI & DEADLINE LOCK
     """
     from services.exam_service import get_all_exams
 
     all_exams = get_all_exams()
+
+    # ----- FILTER: search by exam title -----
+    if search:
+        term = search.lower()
+        all_exams = [
+            exam for exam in all_exams if term in str(exam.get("title", "")).lower()
+        ]
+
+    # ----- SORT: by date or title -----
+    # date uses exam_date "YYYY-MM-DD" (fallback empty string)
+    if sort == "title":
+        all_exams.sort(key=lambda e: str(e.get("title", "")).lower())
+    else:  # default = sort by date (newest first)
+        all_exams.sort(
+            key=lambda e: str(e.get("exam_date", "")),
+            reverse=True,
+        )
 
     exam_list_html = ""
 
@@ -410,6 +463,8 @@ def get_exam_list():
         """
     else:
         for exam in all_exams:
+            if exam.get("is_deleted"):
+                continue
             e_id = exam.get("exam_id", "")
             title = html.escape(exam.get("title", "Untitled"))
             description = html.escape(exam.get("description", "No description"))
@@ -469,35 +524,65 @@ def get_exam_list():
                     <a href="/exam-edit?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Edit Details</a>
                     <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-info">View</a>
                     {grade_btn}
+                    <button type="button"
+                        class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteExamModal"
+                        data-exam-id="{e_id}"
+                        data-exam-title="{title}">
+                        Delete
+                    </button>
+
                 """
             else:
                 status_badge = '<span class="exam-status status-draft">Draft</span>'
                 actions = f"""
                     <a href="/exam-edit?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Edit Details</a>
                     <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-primary">Add Questions / Review</a>
+                    <button type="button"
+                        class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteExamModal"
+                        data-exam-id="{e_id}"
+                        data-exam-title="{title}">
+                        Delete
+                    </button>
                 """
 
+            title_raw = exam.get("title", "Untitled")
+            title_display = html.escape(title_raw)
+            title_key = html.escape(title_raw.lower())
+            date = exam.get("exam_date", "N/A")
+
             exam_list_html += f"""
-            <div class="exam-card">
-                <div class="exam-info">
-                    <h5 class="exam-title">
-                        {title} {status_badge}
-                    </h5>
-                    <p class="exam-desc">{description}</p>
-                    <div class="exam-meta">
-                        <span>📅 {date}</span>
-                        <span>🕐 {start_time} - {end_time}</span>
-                        <span>⏱️ {duration} mins</span>
-                        <span class="exam-id">ID: {e_id}</span>
+                <div class="exam-card" data-title="{title_key}" data-date="{date}">
+                    <div class="exam-info">
+                        <h5 class="exam-title">
+                            {title_display} {status_badge}
+                        </h5>
+                        <p class="exam-desc">{description}</p>
+                        <div class="exam-meta">
+                            <span>📅 {date}</span>
+                            <span>🕐 {start_time} - {end_time}</span>
+                            <span>⏱️ {duration} mins</span>
+                            <span class="exam-id">ID: {e_id}</span>
+                        </div>
+                    </div>
+                    <div class="exam-actions">
+                        {actions}
                     </div>
                 </div>
-                <div class="exam-actions">
-                    {actions}
-                </div>
-            </div>
             """
 
-    html_str = render("exam_list.html", {"exam_list_html": exam_list_html})
+    html_str = render(
+        "exam_list.html",
+        {
+            "exam_list_html": exam_list_html,
+            "success_message": success_message,
+            "search": search,
+            "sort": sort,
+        },
+    )
     return html_str, 200
 
 
