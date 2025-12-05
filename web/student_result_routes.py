@@ -217,22 +217,26 @@ def get_student_result_pdf(exam_id: str, student_id: str):
     """
     GET handler for downloading student result as PDF
     """
-    from services.pdf_service import generate_result_pdf
+    # Import inside function is necessary for local Flask/micro-framework setup
+    from services.pdf_service import generate_result_pdf 
 
     if not exam_id or not student_id:
-        return "Error: Missing exam ID or student ID", 400
+        # FIX: Return 3 values for consistent unpacking in tests
+        return "Error: Missing exam ID or student ID", 400, {}
 
     # Check if results are released
     is_released, release_date, release_time = check_results_released(exam_id)
 
     if not is_released:
-        return "Error: Results not yet released", 403
+        # FIX: Return 3 values for consistent unpacking in tests
+        return "Error: Results not yet released", 403, {}
 
     # Get student result
     result_data = get_student_result(exam_id, student_id)
 
     if not result_data:
-        return "Error: No submission found", 404
+        # FIX: Return 3 values for consistent unpacking in tests
+        return "Error: No submission found", 404, {}
 
     # Generate PDF
     pdf_bytes = generate_result_pdf(result_data)
