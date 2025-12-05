@@ -1,11 +1,16 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 
-from web.admin_routes import ( 
-    get_admin_exam_list, 
-    get_set_result_release, 
-    post_set_result_release
+from web.admin_routes import (
+    get_admin_exam_list,
+    get_set_result_release,
+    post_set_result_release,
+    get_grading_settings,  # NEW
+    get_finalize_exam,  # NEW
+    post_grading_settings,  # NEW
+    post_finalize_exam,  # NEW
 )
+
 from web.template_engine import STATIC_DIR
 from web import exams, mcq, short_answer, student_exam
 from urllib.parse import urlparse, parse_qs
@@ -34,7 +39,6 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     # ---------- GET ----------
-
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -44,40 +48,65 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/", "/create-exam"):
             html_str, status = exams.get_create_exam()
             self._send_html(html_str, status)
+
         elif path.startswith("/exam-edit"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = exams.get_edit_exam(exam_id)
             self._send_html(html_str, status)
+
         elif path == "/exam-list":
             html_str, status = exams.get_exam_list()
             self._send_html(html_str, status)
-        
-        # --- Admin Result Release Routes (NEW) ---
-        elif path == "/admin/exam-list": # <--- ADDED GET HANDLER
+
+        # ------------------------------
+        # ADMIN ROUTES (NEW & ENHANCED)
+        # ------------------------------
+
+        # Enhanced Admin Exam List
+        elif path == "/admin/exam-list":
             html_str, status = get_admin_exam_list()
             self._send_html(html_str, status)
-        elif path.startswith("/admin/set-result-release"): # <--- ADDED GET HANDLER
+
+        # NEW: Comprehensive grading settings
+        elif path == "/admin/grading-settings":
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = get_grading_settings(exam_id)
+            self._send_html(html_str, status)
+
+        # NEW: Finalize exam (GET)
+        elif path == "/admin/finalize-exam":
+            exam_id = query.get("exam_id", [""])[0]
+            html_str, status = get_finalize_exam(exam_id)
+            self._send_html(html_str, status)
+
+        # Legacy route (kept)
+        elif path.startswith("/admin/set-result-release"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_set_result_release(exam_id)
             self._send_html(html_str, status)
-        # -----------------------------------------
-        
+
+        # ------------------------------
+
         elif path.startswith("/mcq-builder"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.get_mcq_builder(exam_id)
             self._send_html(html_str, status)
+
         elif path.startswith("/exam-review"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = exams.get_exam_review(exam_id)
             self._send_html(html_str, status)
+
         elif path.startswith("/exam-publish"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = exams.get_exam_published(exam_id)
             self._send_html(html_str, status)
+
         elif path.startswith("/short-builder"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.get_short_builder(exam_id)
             self._send_html(html_str, status)
+
         elif path == "/debug-time":
             from services.exam_timing import get_server_time
 
@@ -104,30 +133,27 @@ class Handler(BaseHTTPRequestHandler):
             student_id = query.get("student_id", [""])[0]
             html_str, status = student_exam.get_exam_result(exam_id, student_id)
             self._send_html(html_str, status)
-            
+
         elif path == "/student-result":
             exam_id = query.get("exam_id", [""])[0]
             student_id = query.get("student_id", [""])[0]
             html_str, status = get_student_result_view(exam_id, student_id)
             self._send_html(html_str, status)
-            
-        # --- PDF Generation Route (NEW) ---
-        elif path.startswith("/student-result-pdf"): # <--- ADDED ROUTE HERE
+
+        # PDF route
+        elif path.startswith("/student-result-pdf"):
             exam_id = query.get("exam_id", [""])[0]
             student_id = query.get("student_id", [""])[0]
-            
-            # Use the imported function
             pdf_bytes, status, headers = get_student_result_pdf(exam_id, student_id)
-            
-            # Send response with PDF
+
             self.send_response(status)
             for key, value in headers.items():
                 self.send_header(key, value)
             self.end_headers()
             self.wfile.write(pdf_bytes)
-            return # IMPORTANT: return to stop further processing
+            return
 
-        # API routes
+        # API
         elif path == "/api/check-exam-status":
             exam_id = query.get("exam_id", [""])[0]
             student_id = query.get("student_id", [""])[0]
@@ -148,14 +174,14 @@ class Handler(BaseHTTPRequestHandler):
             html_str, status = grading.get_grade_short_answers(submission_id)
             self._send_html(html_str, status)
 
-        # Static files
+        # Static
         elif path.startswith("/static/"):
             self._serve_static(path[len("/static/") :])
+
         else:
             self.send_error(404, "Not Found")
 
     # ---------- POST ----------
-
     def do_POST(self):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8")
@@ -168,34 +194,42 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/submit-exam":
             html_str, status = exams.post_submit_exam(body)
             self._send_html(html_str, status)
+
         elif path == "/publish-exam":
             html_str, status = exams.post_publish_exam(body)
             self._send_html(html_str, status)
+
         elif path.startswith("/mcq-builder"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.post_mcq_builder(exam_id, body)
             self._send_html(html_str, status)
+
         elif path.startswith("/mcq-delete"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.post_delete_mcq(exam_id, body)
             self._send_html(html_str, status)
+
         elif path.startswith("/mcq-done"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.post_mcq_done(exam_id, body)
             self._send_html(html_str, status)
+
         elif path.startswith("/short-builder"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.post_short_builder(exam_id, body)
             self._send_html(html_str, status)
+
         elif path.startswith("/short-done"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.post_short_done(exam_id, body)
             self._send_html(html_str, status)
+
         elif path.startswith("/short-delete"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = short_answer.post_short_delete(exam_id, body)
             self._send_html(html_str, status)
-        elif path.startswith("/exam-edit"): 
+
+        elif path.startswith("/exam-edit"):
             html_str, status = exams.post_edit_exam(body)
             self._send_html(html_str, status)
 
@@ -203,19 +237,18 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/submit-student-exam":
             html_str, status = student_exam.post_submit_student_exam(body)
             self._send_html(html_str, status)
-            
+
         elif path == "/student-result":
             exam_id = query.get("exam_id", [""])[0]
             student_id = query.get("student_id", [""])[0]
             html_str, status = get_student_result_view(exam_id, student_id)
             self._send_html(html_str, status)
-        
-        
 
-        # API routes
+        # API
         elif path == "/api/auto-submit-exam":
             json_str, status = student_exam.api_auto_submit_exam(body)
             self._send_json(json_str, status)
+
         elif path == "/api/save-draft":
             json_str, status = student_exam.api_save_draft(body)
             self._send_json(json_str, status)
@@ -225,9 +258,21 @@ class Handler(BaseHTTPRequestHandler):
 
             html_str, status = grading.post_save_short_answer_grades(body)
             self._send_html(html_str, status)
-            
-        # admin routes (POST)
-        elif path == "/admin/set-result-release": 
+
+        # -----------------------------------
+        # NEW ADMIN POST ROUTES
+        # -----------------------------------
+
+        elif path == "/admin/save-grading-settings":
+            html_str, status = post_grading_settings(body)
+            self._send_html(html_str, status)
+
+        elif path == "/admin/finalize-exam-confirm":
+            html_str, status = post_finalize_exam(body)
+            self._send_html(html_str, status)
+
+        # Legacy (keep)
+        elif path == "/admin/set-result-release":
             html_str, status = post_set_result_release(body)
             self._send_html(html_str, status)
 
@@ -235,7 +280,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404, "Not Found")
 
     # ---------- Static files ----------
-
     def _serve_static(self, filename: str):
         path = os.path.join(STATIC_DIR, filename)
         if not os.path.isfile(path):
@@ -247,7 +291,6 @@ class Handler(BaseHTTPRequestHandler):
 
         self.send_response(200)
 
-        # Add more content-types
         if filename.endswith(".css"):
             self.send_header("Content-Type", "text/css")
         elif filename.endswith(".js"):

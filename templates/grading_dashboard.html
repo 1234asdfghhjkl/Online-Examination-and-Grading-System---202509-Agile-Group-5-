@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grading Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <span class="navbar-brand">⚙️ Exam Settings: {{title}}</span>
+        <a href="/admin/exam-list" class="btn btn-outline-light btn-sm">Close</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {{errors_html}}
+            {{success_html}}
+            
+            <form action="/admin/save-grading-settings" method="POST" class="card shadow-sm">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
+                
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">📅 Period Configuration</h5>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info small">
+                        Exam Date: <strong>{{exam_date}}</strong>. Deadlines must be set after this date.
+                    </div>
+
+                    <h6 class="text-primary fw-bold mt-3">1. Grading Period (Lecturers)</h6>
+                    <p class="text-muted small">Set when lecturers must finish grading. The system will <strong>lock</strong> grading capabilities after this time.</p>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Grading Deadline Date</label>
+                            <input type="date" name="grading_deadline_date" class="form-control" value="{{grading_deadline_date}}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Time</label>
+                            <input type="time" name="grading_deadline_time" class="form-control" value="{{grading_deadline_time}}" required>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="text-success fw-bold mt-3">2. Result Publication (Students)</h6>
+                    <p class="text-muted small">Set when students can view their final marks and feedback.</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Release Date</label>
+                            <input type="date" name="release_date" class="form-control" value="{{release_date}}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Time</label>
+                            <input type="time" name="release_time" class="form-control" value="{{release_time}}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-light text-end">
+                    <button type="submit" class="btn btn-primary px-4">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
