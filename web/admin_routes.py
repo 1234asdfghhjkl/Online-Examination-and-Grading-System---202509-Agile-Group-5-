@@ -88,7 +88,7 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now > deadline_dt:
-                        grading_status = '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
+                        grading_status = '<span class="badge bg-danger ms-2"> Grading Closed</span>'
                         grading_display = (
                             f"Closed on {grading_deadline} at {grading_time}"
                         )
@@ -100,11 +100,11 @@ def get_admin_exam_list():
                         hours_remaining = time_remaining.seconds // 3600
 
                         if days_remaining == 0 and hours_remaining < 24:
-                            grading_status = f'<span class="badge bg-danger ms-2">⏰ {hours_remaining}h Left</span>'
+                            grading_status = f'<span class="badge bg-danger ms-2"> {hours_remaining}h Left</span>'
                         elif days_remaining < 2:
-                            grading_status = f'<span class="badge bg-warning text-dark ms-2">⚠️ {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-warning text-dark ms-2"> {days_remaining}d Left</span>'
                         else:
-                            grading_status = f'<span class="badge bg-info ms-2">📅 {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-info ms-2"> {days_remaining}d Left</span>'
 
                         grading_display = (
                             f"Open until {grading_deadline} at {grading_time}"
@@ -112,7 +112,7 @@ def get_admin_exam_list():
 
                 except ValueError:
                     grading_status = (
-                        '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
                     )
                     grading_display = (
                         f"{grading_deadline} at {grading_time} (Invalid format)"
@@ -138,12 +138,12 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now >= release_dt:
-                        release_status = '<span class="badge bg-success ms-2">✅ Results Released</span>'
+                        release_status = '<span class="badge bg-success ms-2"> Results Released</span>'
                     else:
-                        release_status = '<span class="badge bg-warning text-dark ms-2">📆 Scheduled</span>'
+                        release_status = '<span class="badge bg-warning text-dark ms-2"> Scheduled</span>'
                 except ValueError:
                     release_status = (
-                        '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
                     )
             else:
                 release_status = '<span class="badge bg-secondary ms-2">Not Set</span>'
@@ -163,7 +163,7 @@ def get_admin_exam_list():
                     finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
                 else:
                     finalized_at_str = str(finalized_at)
-                finalized_badge = f'<span class="badge bg-dark ms-2">🔐 Finalized on {finalized_at_str}</span>'
+                finalized_badge = f'<span class="badge bg-dark ms-2"> Finalized on {finalized_at_str}</span>'
                 # If finalized, grading is definitely closed regardless of deadline
                 is_grading_closed = True
 
@@ -177,9 +177,9 @@ def get_admin_exam_list():
                 grade_button_html = ""
             else:
                 grade_button_html = f"""
-                <a href="/grade-submissions?exam_id={e_id}" 
+                <a href="/grade-submissions?exam_id={e_id}"
                    class="btn btn-sm btn-success">
-                   📝 Grade Submissions
+                   Grade Submissions
                 </a>
                 """
 
@@ -194,32 +194,32 @@ def get_admin_exam_list():
                         {finalized_badge}
                     </h5>
                     <p class="exam-desc">{description}</p>
-                    
+
                     <div class="exam-meta">
-                        <span>📅 Exam: {exam_date}</span>
-                        <span>🕐 {start_time} - {end_time}</span>
-                        <span>⏱️ {duration} mins</span>
+                        <span> Exam: {exam_date}</span>
+                        <span> {start_time} - {end_time}</span>
+                        <span> {duration} mins</span>
                         <span class="exam-id">ID: {e_id}</span>
                     </div>
-                    
+
                     <div class="exam-meta mt-2 p-2 bg-light rounded">
-                        <div><strong>⏰ Grading Deadline:</strong> {grading_display}</div>
-                        <div class="mt-1"><strong>📊 Result Release:</strong> {release_display}</div>
+                        <div><strong> Grading Deadline:</strong> {grading_display}</div>
+                        <div class="mt-1"><strong> Result Release:</strong> {release_display}</div>
                     </div>
                 </div>
-                
+
                 <div class="exam-actions d-flex flex-column gap-2">
-                    <a href="/admin/grading-settings?exam_id={e_id}" 
+                    <a href="/admin/grading-settings?exam_id={e_id}"
                        class="btn btn-sm btn-primary">
-                       ⚙️ Settings
+                       Settings
                     </a>
-                    
+
                     {grade_button_html}
-                    
+
                     {"" if is_finalized else f'''
-                    <a href="/admin/finalize-exam?exam_id={e_id}" 
+                    <a href="/admin/finalize-exam?exam_id={e_id}"
                        class="btn btn-sm btn-warning">
-                       🔒 Finalize Results
+                       Finalize Results
                     </a>
                     '''}
                 </div>
@@ -241,10 +241,13 @@ def get_set_result_release(exam_id: str):
             {
                 "exam_id": "",
                 "title": "",
+                "description": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "release_date": "",
                 "release_time": "00:00",
-                "errors_html": "",
+                "errors_html": '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>',
                 "success_html": "",
             },
         )
@@ -257,8 +260,11 @@ def get_set_result_release(exam_id: str):
             "set_result_release.html",
             {
                 "exam_id": exam_id,
-                "title": "Exam not found",
+                "title": "",
+                "description": "",
                 "exam_date": "",
+                "start_time": "",
+                "end_time": "",
                 "release_date": "",
                 "release_time": "00:00",
                 "errors_html": f'<div class="alert alert-danger">Exam "{exam_id}" not found.</div>',
@@ -284,6 +290,7 @@ def get_set_result_release(exam_id: str):
     return html_str, 200
 
 
+
 def post_set_result_release(body: str):
     """
     POST handler for setting result release date
@@ -299,7 +306,10 @@ def post_set_result_release(body: str):
         )
         ctx["success_html"] = ""
         ctx["title"] = ""
+        ctx["description"] = ""
         ctx["exam_date"] = ""
+        ctx["start_time"] = ""
+        ctx["end_time"] = ""
         html_str = render("set_result_release.html", ctx)
         return html_str, 400
 
@@ -312,7 +322,10 @@ def post_set_result_release(body: str):
         )
         ctx["success_html"] = ""
         ctx["title"] = ""
+        ctx["description"] = ""
         ctx["exam_date"] = ""
+        ctx["start_time"] = ""
+        ctx["end_time"] = ""
         html_str = render("set_result_release.html", ctx)
         return html_str, 404
 
@@ -379,7 +392,6 @@ def post_set_result_release(body: str):
         ctx["end_time"] = exam.get("end_time", "")
         html_str = render("set_result_release.html", ctx)
         return html_str, 500
-
 
 # ============================================================
 # NEW: COMPREHENSIVE GRADING SETTINGS
@@ -493,7 +505,7 @@ def post_grading_settings(body: str):
         error_items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
         errors_html = f"""
         <div class="alert alert-danger mb-3">
-            <strong>⚠️ Please fix the following:</strong>
+            <strong> Please fix the following:</strong>
             <ul class="mb-0 mt-2">{error_items}</ul>
         </div>
         """
@@ -518,7 +530,7 @@ def post_grading_settings(body: str):
 
         success_html = """
         <div class="alert alert-success mb-3">
-            <h5 class="alert-heading">✅ Settings Saved Successfully!</h5>
+            <h5 class="alert-heading"> Settings Saved Successfully!</h5>
             <hr>
             <p class="mb-0">
                 Grading deadline and result release dates have been configured.
@@ -538,7 +550,7 @@ def post_grading_settings(body: str):
     except ValueError as e:
         errors_html = f"""
         <div class="alert alert-danger mb-3">
-            <strong>❌ Error saving settings:</strong><br>
+            <strong> Error saving settings:</strong><br>
             {html.escape(str(e))}
         </div>
         """
@@ -634,7 +646,7 @@ def get_finalize_exam(exam_id: str):
         info_html = f"""
         <div class="container mt-5">
             <div class="alert alert-info">
-                <h4>ℹ️ Already Finalized</h4>
+                <h4> Already Finalized</h4>
                 <p>This exam was finalized on <strong>{finalized_at_str}</strong></p>
                 <p>Results are locked and cannot be changed.</p>
                 <a href="/admin/exam-list" class="btn btn-primary">Back to Exam List</a>
@@ -668,7 +680,7 @@ def get_finalize_exam(exam_id: str):
     if not all_submissions:
         warning_html = """
         <div class="alert alert-danger">
-            <h5>❌ Cannot Finalize</h5>
+            <h5> Cannot Finalize</h5>
             <p>No submissions found for this exam. Students must complete the exam first.</p>
         </div>
         """
@@ -688,7 +700,7 @@ def get_finalize_exam(exam_id: str):
 
         warning_html = f"""
         <div class="alert alert-warning">
-            <h5>⚠️ Cannot Finalize Yet</h5>
+            <h5> Cannot Finalize Yet</h5>
             <p><strong>{len(ungraded)}</strong> submission(s) still need grading:</p>
             <ul class="mb-0">{ungraded_list}</ul>
             <hr>
@@ -754,10 +766,10 @@ def get_finalize_exam(exam_id: str):
             </div>
         </div>
     </div>
-    
+
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">📊 Grade Distribution</h5>
+            <h5 class="mb-0"> Grade Distribution</h5>
         </div>
         <div class="card-body">
             {grade_dist_html if grade_dist_html else '<p class="text-muted">No data available</p>'}
@@ -768,14 +780,14 @@ def get_finalize_exam(exam_id: str):
     # Build action buttons
     if can_finalize:
         action_html = f"""
-        <form method="POST" action="/admin/finalize-exam-confirm" 
-              onsubmit="return confirm('⚠️ IMPORTANT: Once finalized, grades CANNOT be changed.\\n\\nAre you sure you want to finalize this exam?');">
+        <form method="POST" action="/admin/finalize-exam-confirm"
+              onsubmit="return confirm(' IMPORTANT: Once finalized, grades CANNOT be changed.\\n\\nAre you sure you want to finalize this exam?');">
             <input type="hidden" name="exam_id" value="{exam_id}">
             <input type="hidden" name="admin_id" value="admin">
             <div class="d-flex gap-3 justify-content-center">
                 <a href="/admin/exam-list" class="btn btn-secondary btn-lg px-5">Cancel</a>
                 <button type="submit" class="btn btn-danger btn-lg px-5">
-                    🔒 Finalize & Lock Results
+                     Finalize & Lock Results
                 </button>
             </div>
         </form>
@@ -784,7 +796,7 @@ def get_finalize_exam(exam_id: str):
         action_html = f"""
         <div class="text-center">
             <a href="/grade-submissions?exam_id={exam_id}" class="btn btn-primary btn-lg px-5">
-                📝 Complete Grading First
+                 Complete Grading First
             </a>
         </div>
         """
@@ -840,7 +852,7 @@ def post_finalize_exam(body: str):
         <body class="bg-light">
             <div class="container mt-5">
                 <div class="alert alert-success">
-                    <h2>✅ Exam Results Finalized Successfully!</h2>
+                    <h2> Exam Results Finalized Successfully!</h2>
                     <hr>
                     <h5>Summary:</h5>
                     <ul>
@@ -851,7 +863,7 @@ def post_finalize_exam(body: str):
                     </ul>
                     <hr>
                     <p class="mb-0">
-                        <strong>🔒 All grades are now PERMANENTLY LOCKED.</strong><br>
+                        <strong> All grades are now PERMANENTLY LOCKED.</strong><br>
                         Students will be able to view their results according to the release schedule.
                     </p>
                 </div>
@@ -875,7 +887,7 @@ def post_finalize_exam(body: str):
         <body class="bg-light">
             <div class="container mt-5">
                 <div class="alert alert-danger">
-                    <h4>❌ Cannot Finalize Exam</h4>
+                    <h4> Cannot Finalize Exam</h4>
                     <p><strong>Error:</strong> {html.escape(str(e))}</p>
                     <hr>
                     <a href="/admin/finalize-exam?exam_id={exam_id}" class="btn btn-secondary">Go Back</a>
@@ -897,7 +909,7 @@ def post_finalize_exam(body: str):
         <body class="bg-light">
             <div class="container mt-5">
                 <div class="alert alert-danger">
-                    <h4>💥 System Error</h4>
+                    <h4> System Error</h4>
                     <p><strong>Unexpected error:</strong> {html.escape(str(e))}</p>
                     <p>Please contact the system administrator.</p>
                     <hr>
