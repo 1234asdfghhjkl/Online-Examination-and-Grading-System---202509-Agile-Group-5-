@@ -105,6 +105,49 @@ def get_exam_by_id(exam_id: str) -> Optional[Dict]:
     return None
 
 
+def soft_delete_exam(exam_id: str) -> None:
+    """
+    Soft delete: mark exam as inactive but keep all data.
+    """
+    if not exam_id:
+        raise ValueError("Missing exam_id")
+
+    ref = db.collection("exams").document(exam_id)
+    snap = ref.get()
+    if not snap.exists:
+        raise ValueError(f"Exam {exam_id} not found")
+
+    # mark as deleted but DO NOT remove document or questions
+    ref.update({"is_deleted": True})
+
+
+def delete_exam_and_contents(exam_id: str) -> None:
+    if not exam_id:
+        raise ValueError("Missing exam_id")
+
+    # ---- Check exam exists ----
+    exam_ref = db.collection("exams").document(exam_id)
+    if not exam_ref.get().exists:
+        raise ValueError(f"Exam {exam_id} not found")
+
+    # ---- Delete all questions for this exam ----
+    questions_query = (
+        db.collection("questions").where("exam_id", "==", exam_id).stream()
+    )
+    for doc in questions_query:
+        doc.reference.delete()
+
+    # ---- Delete all submissions for this exam ----
+    submissions_query = (
+        db.collection("submissions").where("exam_id", "==", exam_id).stream()
+    )
+    for doc in submissions_query:
+        doc.reference.delete()
+
+    # ---- Finally delete the exam document ----
+    exam_ref.delete()
+
+
 def get_all_published_exams() -> list:
     """
     Fetches all exams with status 'published'

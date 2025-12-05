@@ -218,7 +218,7 @@ def get_student_result_pdf(exam_id: str, student_id: str):
     GET handler for downloading student result as PDF
     """
     # Import inside function is necessary for local Flask/micro-framework setup
-    from services.pdf_service import generate_result_pdf 
+    from services.pdf_service import generate_result_pdf
 
     if not exam_id or not student_id:
         # FIX: Return 3 values for consistent unpacking in tests
