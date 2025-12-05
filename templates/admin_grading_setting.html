@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grading Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
+        .settings-card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .section-icon { font-size: 1.5rem; margin-right: 0.5rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <span class="navbar-brand fw-bold">⚙️ Exam Settings</span>
+        <a href="/admin/exam-list" class="btn btn-outline-light btn-sm">Close & Return</a>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <div class="mb-4 text-center">
+                <h2 class="fw-bold">{{title}}</h2>
+                <p class="text-muted">Configure grading deadlines and result release schedule</p>
+            </div>
+
+            {{errors_html}}
+            {{success_html}}
+            
+            <form action="/admin/save-grading-settings" method="POST" class="card settings-card">
+                <input type="hidden" name="exam_id" value="{{exam_id}}">
+                
+                <div class="card-body p-4 p-md-5">
+                    
+                    <!-- Info Banner -->
+                    <div class="alert alert-light border d-flex align-items-center mb-4">
+                        <span class="fs-4 me-3">📅</span>
+                        <div>
+                            <strong>Exam Date Reference:</strong><br>
+                            This exam is scheduled for <strong>{{exam_date}}</strong>. <br>
+                            <small class="text-muted">Ensure all deadlines are set <em>after</em> this date.</small>
+                        </div>
+                    </div>
+
+                    <!-- Grading Period Section -->
+                    <div class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="section-icon">⏳</span>
+                            <h5 class="fw-bold mb-0 text-primary">1. Grading Period (Lecturers)</h5>
+                        </div>
+                        <p class="text-muted small ms-4 mb-3">
+                            Set the deadline for lecturers to upload and finalize grades. 
+                            The system will <strong class="text-danger">LOCK</strong> the grading interface after this time.
+                        </p>
+                        
+                        <div class="row g-3 ms-md-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Deadline Date</label>
+                                <input type="date" name="grading_deadline_date" class="form-control" value="{{grading_deadline_date}}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Deadline Time</label>
+                                <input type="time" name="grading_deadline_time" class="form-control" value="{{grading_deadline_time}}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4 text-muted opacity-25">
+                    
+                    <!-- Result Release Section -->
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="section-icon">🚀</span>
+                            <h5 class="fw-bold mb-0 text-success">2. Result Publication (Students)</h5>
+                        </div>
+                        <p class="text-muted small ms-4 mb-3">
+                            Set when students can view their final marks and feedback. 
+                            This should typically be <em>after</em> the grading deadline.
+                        </p>
+                        
+                        <div class="row g-3 ms-md-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Release Date</label>
+                                <input type="date" name="release_date" class="form-control" value="{{release_date}}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Release Time</label>
+                                <input type="time" name="release_time" class="form-control" value="{{release_time}}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">💾 Save Settings</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -2,7 +2,7 @@ from urllib.parse import parse_qs
 import html
 
 from core.validation import validate_exam, validate_exam_date, validate_exam_times
-from services.exam_service import save_exam_draft, publish_exam, get_exam_by_id
+from services.exam_service import save_exam_draft, publish_exam, get_exam_by_id, check_grading_locked
 from services.question_service import has_mcq_for_exam, has_short_for_exam
 from .template_engine import render
 
@@ -371,7 +371,7 @@ def get_exam_published(exam_id: str):
 
 def get_exam_list():
     """
-    GET handler for listing all exams (admin view) - UPDATED FOR TIDY UI
+    GET handler for listing all exams (admin view) - UPDATED FOR TIDY UI & DEADLINE LOCK
     """
     from services.exam_service import get_all_exams
 
@@ -423,13 +423,28 @@ def get_exam_list():
             # --- TIDY UI LOGIC ---
             if status == "published":
                 status_badge = '<span class="exam-status status-published">Published</span>'
-                # UPDATED ACTIONS: Buttons are now on a single line and use the same small size
+                
+                # --- CHECK GRADING DEADLINE ---
+                is_locked, lock_msg, _ = check_grading_locked(e_id)
+                
+                if is_locked:
+                    # If locked, show disabled gray button
+                    grade_btn = f'''
+                    <button class="btn btn-sm btn-secondary" disabled title="{html.escape(lock_msg)}">
+                        🔒 Grading Closed
+                    </button>
+                    '''
+                else:
+                    # If open, show normal green button
+                    grade_btn = f'<a href="/grade-submissions?exam_id={e_id}" class="btn btn-sm btn-success">Grade</a>'
+
+                # UPDATED ACTIONS: 
+                # 1. Removed "Student Test" button
+                # 2. Updated "Grade" button logic
                 actions = f"""
                     <a href="/exam-edit?exam_id={e_id}" class="btn btn-sm btn-outline-primary">Edit Details</a>
                     <a href="/exam-review?exam_id={e_id}" class="btn btn-sm btn-info">View</a>
-                    <a href="/grade-submissions?exam_id={e_id}" class="btn btn-sm btn-success">Grade</a>
-                    <a href="/student-exam?exam_id={e_id}&student_id=test_student_01" 
-                        class="btn btn-sm btn-outline-dark">Student Test</a>
+                    {grade_btn}
                 """
             else:
                 status_badge = '<span class="exam-status status-draft">Draft</span>'

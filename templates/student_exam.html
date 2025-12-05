@@ -720,12 +720,61 @@ document.getElementById('exam-form')?.addEventListener('submit', function(e) {
         modal.classList.remove('show');
     };
     
-    // Handle confirm button
-    document.getElementById('modal-confirm').onclick = function() {
-        isSubmitting = true; // Set flag to prevent beforeunload alert
+    // Handle confirm button: CHANGED TO USE FETCH INSTEAD OF STANDARD SUBMIT
+    document.getElementById('modal-confirm').onclick = async function() {
+        isSubmitting = true; 
         const answers = collectAnswers();
         document.getElementById('answers-data').value = JSON.stringify(answers);
-        document.getElementById('exam-form').submit();
+        
+        // --- NEW LOGIC START ---
+        const btn = document.getElementById('modal-confirm');
+        const originalText = btn.textContent;
+        btn.textContent = 'Submitting...';
+        btn.disabled = true;
+
+        try {
+            // Convert Form Data to URL-encoded string for the backend `parse_qs`
+            const form = document.getElementById('exam-form');
+            const formData = new FormData(form);
+            
+            const response = await fetch('/submit-student-exam', {
+                method: 'POST',
+                // This converts FormData to "key=value&..." string automatically
+                body: new URLSearchParams(formData) 
+            });
+
+            if (response.ok) {
+                // Success: Hide Modal & Active Section, Show "Submitted" Section
+                document.getElementById('submit-modal').classList.remove('show');
+                
+                examStatus = 'submitted';
+                initialize(); // Updates view based on new status
+                
+                // Cleanup timers
+                clearInterval(timerInterval);
+                clearInterval(syncInterval);
+                clearInterval(autoSaveInterval);
+                
+                // Set submission timestamp
+                const now = new Date();
+                const timeString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+                document.getElementById('submission-time').textContent = timeString;
+                
+                window.scrollTo(0, 0);
+            } else {
+                alert('Submission failed. Please try again.');
+                isSubmitting = false;
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error. Please check your connection.');
+            isSubmitting = false;
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+        // --- NEW LOGIC END ---
     };
     
     // Close modal when clicking outside
