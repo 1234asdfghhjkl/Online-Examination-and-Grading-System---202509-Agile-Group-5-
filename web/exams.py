@@ -427,13 +427,30 @@ def get_exam_delete(exam_id: str, method: str = "hard"):
     return get_exam_list(success_message=msg)
 
 
-def get_exam_list(success_message: str = ""):
+def get_exam_list(success_message: str = "", search: str = "", sort: str = "date"):
     """
     GET handler for listing all exams (admin view) - UPDATED FOR TIDY UI & DEADLINE LOCK
     """
     from services.exam_service import get_all_exams
 
     all_exams = get_all_exams()
+
+    # ----- FILTER: search by exam title -----
+    if search:
+        term = search.lower()
+        all_exams = [
+            exam for exam in all_exams if term in str(exam.get("title", "")).lower()
+        ]
+
+    # ----- SORT: by date or title -----
+    # date uses exam_date "YYYY-MM-DD" (fallback empty string)
+    if sort == "title":
+        all_exams.sort(key=lambda e: str(e.get("title", "")).lower())
+    else:  # default = sort by date (newest first)
+        all_exams.sort(
+            key=lambda e: str(e.get("exam_date", "")),
+            reverse=True,
+        )
 
     exam_list_html = ""
 
@@ -532,24 +549,29 @@ def get_exam_list(success_message: str = ""):
                     </button>
                 """
 
+            title_raw = exam.get("title", "Untitled")
+            title_display = html.escape(title_raw)
+            title_key = html.escape(title_raw.lower())
+            date = exam.get("exam_date", "N/A")
+
             exam_list_html += f"""
-            <div class="exam-card">
-                <div class="exam-info">
-                    <h5 class="exam-title">
-                        {title} {status_badge}
-                    </h5>
-                    <p class="exam-desc">{description}</p>
-                    <div class="exam-meta">
-                        <span>📅 {date}</span>
-                        <span>🕐 {start_time} - {end_time}</span>
-                        <span>⏱️ {duration} mins</span>
-                        <span class="exam-id">ID: {e_id}</span>
+                <div class="exam-card" data-title="{title_key}" data-date="{date}">
+                    <div class="exam-info">
+                        <h5 class="exam-title">
+                            {title_display} {status_badge}
+                        </h5>
+                        <p class="exam-desc">{description}</p>
+                        <div class="exam-meta">
+                            <span>📅 {date}</span>
+                            <span>🕐 {start_time} - {end_time}</span>
+                            <span>⏱️ {duration} mins</span>
+                            <span class="exam-id">ID: {e_id}</span>
+                        </div>
+                    </div>
+                    <div class="exam-actions">
+                        {actions}
                     </div>
                 </div>
-                <div class="exam-actions">
-                    {actions}
-                </div>
-            </div>
             """
 
     html_str = render(
@@ -557,6 +579,8 @@ def get_exam_list(success_message: str = ""):
         {
             "exam_list_html": exam_list_html,
             "success_message": success_message,
+            "search": search,
+            "sort": sort,
         },
     )
     return html_str, 200

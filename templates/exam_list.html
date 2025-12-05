@@ -21,17 +21,39 @@
 </nav>
 
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
 
-            <div class="list-header">
-                <h4 class="mb-1 fw-bold">All Exams</h4>
-                <p class="text-muted mb-0">Manage your exams, questions, and publishing</p>
-            </div>
-            {{exam_list_html}}
+      <div class="list-header mb-3">
+        <h4 class="mb-1 fw-bold">All Exams</h4>
+        <p class="text-muted mb-0">Manage your exams, questions, and publishing</p>
+      </div>
+
+      <!-- Filter & Sort controls -->
+      <form class="row g-2 mb-3" id="examFilterForm" onsubmit="return false;">
+        <div class="col-md-6">
+          <input
+            type="text"
+            class="form-control"
+            id="examSearch"
+            placeholder="Search by exam title..."
+            value="{{search}}"
+          />
         </div>
+        <div class="col-md-4">
+          <select class="form-select" id="sortSelect">
+            <option value="date">Sort by date</option>
+            <option value="title">Sort by title</option>
+          </select>
+        </div>
+      </form>
+      <div id="examListContainer">
+        {{exam_list_html}}
+      </div>
     </div>
+  </div>
 </div>
+
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteExamModal" tabindex="-1" aria-hidden="true">
@@ -114,6 +136,71 @@
       var toast = new bootstrap.Toast(toastEl, { delay: 3000 });
       toast.show();
     }
+  })();
+
+ // Live search + sort
+  (function () {
+    const searchInput = document.getElementById('examSearch');
+    const sortSelect = document.getElementById('sortSelect');
+    const container = document.getElementById('examListContainer');
+    if (!searchInput || !sortSelect || !container) return;
+
+    const cards = Array.from(container.querySelectorAll('.exam-card'));
+
+    // Set initial sort from server value if you still pass it
+    (function setInitialSort() {
+      var currentSort = "{{sort}}";
+      if (!currentSort) return;
+      for (var i = 0; i < sortSelect.options.length; i++) {
+        if (sortSelect.options[i].value === currentSort) {
+          sortSelect.selectedIndex = i;
+          break;
+        }
+      }
+    })();
+
+    function applyFilterSort() {
+  const term = (searchInput.value || '').toLowerCase().trim();
+  const sortBy = sortSelect.value || 'date';
+
+  // Filter by title: keep cards that contain the term anywhere
+  cards.forEach(card => {
+    const title = (card.dataset.title || '').toLowerCase();
+    const matches = !term || title.includes(term);
+    card.style.display = matches ? '' : 'none';
+  });
+
+  // Sort only visible cards
+  const visible = cards.filter(c => c.style.display !== 'none');
+
+  visible.sort((a, b) => {
+    const at = (a.dataset.title || '').toLowerCase();
+    const bt = (b.dataset.title || '').toLowerCase();
+
+    // When there is a search term, prioritise titles that START with it
+    if (term) {
+      const aStarts = at.startsWith(term);
+      const bStarts = bt.startsWith(term);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+    }
+
+    if (sortBy === 'title') {
+      // A → Z
+      return (a.dataset.title || '').localeCompare(b.dataset.title || '');
+    } else {
+      // date, newest first
+      return (b.dataset.date || '').localeCompare(a.dataset.date || '');
+    }
+  });
+
+  visible.forEach(card => container.appendChild(card));
+}
+
+    searchInput.addEventListener('input', applyFilterSort);
+    sortSelect.addEventListener('change', applyFilterSort);
+
+    applyFilterSort();
   })();
 </script>
 
