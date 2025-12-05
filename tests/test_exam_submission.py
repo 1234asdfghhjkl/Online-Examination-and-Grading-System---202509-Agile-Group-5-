@@ -21,8 +21,7 @@ def test_submit_exam_success(mocker, mock_firestore):
     mocker.patch("services.grading_service.save_grading_result", return_value=True)
     mocker.patch("web.student_exam.get_server_time")
 
-    # 3. [NEW] Mock Render so we don't look for HTML files
-    # We fake it returning a success message
+    # 3. Mock Render - kept for safety, though unused in success redirect
     mocker.patch(
         "web.student_exam.render", return_value="<html>Grading your exam...</html>"
     )
@@ -32,10 +31,12 @@ def test_submit_exam_success(mocker, mock_firestore):
 
     # --- ASSERT ---
     assert status_code == 200
-    # Since we mocked render, we check if our mocked return value exists
-    assert "Grading your exam" in response_html
+    
+    # [FIXED] Check for the Redirect message instead of "Grading your exam"
+    assert "Redirecting to dashboard" in response_html
+    assert "/student-dashboard?student_id=std_123" in response_html
 
-    # Check if DB was called
+    # Check if DB was called (using the fixture)
     assert mock_firestore.collection.call_args[0][0] == "submissions"
     mock_firestore.collection.return_value.document.return_value.set.assert_called_once()
 
@@ -53,7 +54,7 @@ def test_prevent_duplicate_submission(mocker):
         return_value={"has_submitted": True},
     )
 
-    # 2. [NEW] Mock Render to avoid FileNotFoundError for 'error.html'
+    # 2. Mock Render to return expected error HTML
     mocker.patch(
         "web.student_exam.render",
         return_value="<html>Error: You have already submitted</html>",
