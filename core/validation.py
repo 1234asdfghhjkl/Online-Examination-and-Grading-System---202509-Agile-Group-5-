@@ -233,8 +233,8 @@ def validate_grading_periods(
 
     if verification_gap < min_verification_time:
         errors.append(
-            f"⏱️ Need at least 1 hour between grading deadline and result release "
-            f"for verification and quality checks"
+            "⏱️ Need at least 1 hour between grading deadline and result release "
+            "for verification and quality checks"
         )
 
     # ============================================
@@ -276,50 +276,6 @@ def validate_grading_periods(
             f"⚠️ Grading period is unusually long ({time_gap.days} days). "
             f"Consider setting an earlier deadline to release results faster"
         )
-
-    return errors
-
-
-def validate_result_release_date(release_date: str, exam_date: str) -> List[str]:
-    """
-    Validate result release date (simplified version)
-    Used by the legacy set_result_release endpoint
-
-    Args:
-        release_date: Result release date (YYYY-MM-DD)
-        exam_date: Exam date (YYYY-MM-DD)
-
-    Returns:
-        List of error messages
-    """
-    errors = []
-
-    if not release_date:
-        errors.append("Result release date is required")
-        return errors
-
-    if not exam_date:
-        errors.append("Exam date is required")
-        return errors
-
-    try:
-        release_dt = datetime.strptime(release_date, "%Y-%m-%d")
-        exam_dt = datetime.strptime(exam_date, "%Y-%m-%d")
-    except ValueError as e:
-        errors.append(f"Invalid date format: {e}")
-        return errors
-
-    # Release date must be after exam date
-    if release_dt <= exam_dt:
-        errors.append(
-            f"Result release date must be AFTER exam date. "
-            f"Exam: {exam_date}, Release: {release_date}"
-        )
-
-    # Not too far in the past
-    now = datetime.now()
-    if release_dt < now.replace(hour=0, minute=0, second=0, microsecond=0):
-        errors.append("Result release date cannot be in the past")
 
     return errors
 

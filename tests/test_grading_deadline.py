@@ -1,6 +1,6 @@
 # tests/test_grading_deadline.py
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime
 
 # Import the function under test

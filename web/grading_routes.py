@@ -2,7 +2,6 @@ import html
 from datetime import datetime
 from urllib.parse import parse_qs
 
-from core.firebase_db import db
 from services.exam_service import get_exam_by_id
 from services.short_answer_grading_service import (
     get_all_submissions_for_exam,

@@ -185,28 +185,6 @@ def set_result_release_date(
     )
 
 
-def get_all_published_exams_for_admin() -> list:
-    """
-    Fetches all published exams for admin result management
-    """
-    try:
-        query = db.collection("exams").where("status", "==", "published").stream()
-
-        exams = []
-        for doc in query:
-            data = doc.to_dict()
-            data["exam_id"] = doc.id
-            exams.append(data)
-
-        # Sort by exam date
-        exams.sort(key=lambda x: x.get("exam_date", ""), reverse=True)
-
-        return exams
-    except Exception as e:
-        print(f"Error fetching published exams: {e}")
-        return []
-
-
 def save_grading_settings(
     exam_id: str,
     grading_deadline_date: str,
@@ -362,7 +340,6 @@ def finalize_exam_results(exam_id: str, admin_id: str = "system") -> Dict:
     Raises:
         ValueError: If exam not ready for finalization
     """
-    from services.grading_service import get_student_submission
 
     exam = get_exam_by_id(exam_id)
     if not exam:
@@ -501,58 +478,3 @@ def calculate_grade_distribution(scores: List[float]) -> Dict:
             distribution["F"] += 1
 
     return distribution
-
-
-def get_exam_by_id(exam_id: str) -> Optional[Dict]:
-    """
-    Get exam by ID
-    (Include this if not already in your exam_service.py)
-
-    Args:
-        exam_id: Exam identifier
-
-    Returns:
-        Exam dictionary or None if not found
-    """
-    if not exam_id:
-        return None
-
-    doc_ref = db.collection("exams").document(exam_id)
-    doc = doc_ref.get()
-
-    if not doc.exists:
-        return None
-
-    exam = doc.to_dict()
-    exam["exam_id"] = doc.id
-    return exam
-
-
-def set_result_release_date(exam_id: str, release_date: str, release_time: str) -> None:
-    """
-    Set result release date for an exam (legacy function)
-
-    Args:
-        exam_id: Exam identifier
-        release_date: Release date (YYYY-MM-DD)
-        release_time: Release time (HH:MM)
-
-    Raises:
-        ValueError: If exam not found
-    """
-    if not exam_id:
-        raise ValueError("Exam ID is required")
-
-    doc_ref = db.collection("exams").document(exam_id)
-    doc = doc_ref.get()
-
-    if not doc.exists:
-        raise ValueError(f"Exam {exam_id} not found")
-
-    doc_ref.update(
-        {
-            "result_release_date": release_date,
-            "result_release_time": release_time,
-            "updated_at": datetime.utcnow(),
-        }
-    )
