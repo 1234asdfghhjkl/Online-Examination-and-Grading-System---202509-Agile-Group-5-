@@ -2,7 +2,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from datetime import datetime
-from io import BytesIO
 
 # Import the function to be tested
 from services.pdf_service import generate_result_pdf

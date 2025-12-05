@@ -1,7 +1,6 @@
 # tests/test_student_view_result.py
 import unittest
 from unittest.mock import patch, MagicMock
-import os
 from datetime import datetime
 import re 
 

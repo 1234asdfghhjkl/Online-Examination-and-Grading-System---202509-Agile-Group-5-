@@ -1,6 +1,6 @@
 # tests/test_admin_view_examlist.py
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from datetime import datetime
 import re
 
