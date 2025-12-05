@@ -5,10 +5,10 @@ from web.admin_routes import (
     get_admin_exam_list,
     get_set_result_release,
     post_set_result_release,
-    get_grading_settings,     # NEW
-    get_finalize_exam,        # NEW
-    post_grading_settings,    # NEW
-    post_finalize_exam        # NEW
+    get_grading_settings,  # NEW
+    get_finalize_exam,  # NEW
+    post_grading_settings,  # NEW
+    post_finalize_exam,  # NEW
 )
 
 from web.template_engine import STATIC_DIR
@@ -109,8 +109,11 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/debug-time":
             from services.exam_timing import get_server_time
+
             server_time = get_server_time()
-            html_str = f"<h1>Server Time: {server_time.strftime('%Y-%m-%d %H:%M:%S %Z')}</h1>"
+            html_str = (
+                f"<h1>Server Time: {server_time.strftime('%Y-%m-%d %H:%M:%S %Z')}</h1>"
+            )
             self._send_html(html_str, 200)
 
         # Student routes
@@ -160,18 +163,20 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/grade-submissions":
             exam_id = query.get("exam_id", [""])[0]
             from web import grading
+
             html_str, status = grading.get_grade_submissions(exam_id)
             self._send_html(html_str, status)
 
         elif path == "/grade-short-answers":
             submission_id = query.get("submission_id", [""])[0]
             from web import grading
+
             html_str, status = grading.get_grade_short_answers(submission_id)
             self._send_html(html_str, status)
 
         # Static
         elif path.startswith("/static/"):
-            self._serve_static(path[len("/static/"):])
+            self._serve_static(path[len("/static/") :])
 
         else:
             self.send_error(404, "Not Found")
@@ -250,6 +255,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/save-short-answer-grades":
             from web import grading
+
             html_str, status = grading.post_save_short_answer_grades(body)
             self._send_html(html_str, status)
 
@@ -308,7 +314,9 @@ if __name__ == "__main__":
         httpd = HTTPServer((HOST, PORT), Handler)
         print(f"Serving at http://{HOST}:{PORT}")
         print(f"\nLecturer: http://{HOST}:{PORT}/exam-list")
-        print(f"\nStudent: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01")
+        print(
+            f"\nStudent: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01"
+        )
         print(f"\nAdmin: http://{HOST}:{PORT}/admin/exam-list")
         httpd.serve_forever()
     except KeyboardInterrupt:

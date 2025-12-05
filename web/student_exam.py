@@ -118,7 +118,7 @@ def get_student_dashboard(student_id: str):
     Renders the student dashboard with a list of available exams and submissions
     """
     from services.student_submission_service import get_student_submissions
-    
+
     published_exams = get_all_published_exams()
 
     # If no student ID is provided, default to a test one
@@ -138,7 +138,7 @@ def get_student_dashboard(student_id: str):
             title = html.escape(exam.get("title", "Untitled"))
             duration = exam.get("duration", 0)
             date = exam.get("exam_date", "N/A")
-            
+
             # Handle both old and new time formats
             start_time = exam.get("start_time", exam.get("exam_time", "N/A"))
 
@@ -159,11 +159,11 @@ def get_student_dashboard(student_id: str):
                 </div>
             </div>
             """
-    
+
     # Build submissions HTML
     submissions = get_student_submissions(current_student_id)
     submissions_html = ""
-    
+
     if not submissions:
         submissions_html = """
         <div class="alert alert-info">
@@ -175,17 +175,17 @@ def get_student_dashboard(student_id: str):
             exam_title = html.escape(sub.get("exam_title", "Unknown Exam"))
             exam_date = sub.get("exam_date", "N/A")
             submitted_at = sub.get("submitted_at")
-            
+
             if isinstance(submitted_at, datetime):
                 submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M")
             else:
                 submitted_time = "N/A"
-            
+
             exam_id = sub.get("exam_id")
             results_released = sub.get("results_released", False)
             release_date = sub.get("release_date")
             release_time = sub.get("release_time", "00:00")
-            
+
             if results_released:
                 status_badge = '<span class="status-badge status-released">✅ Results Available</span>'
                 action_button = f"""
@@ -215,7 +215,7 @@ def get_student_dashboard(student_id: str):
                     </button>
                     """
                 score_display = ""
-            
+
             submissions_html += f"""
             <div class="submission-card">
                 <div class="row align-items-center">
@@ -387,13 +387,13 @@ def post_submit_student_exam(body: str):
     save_grading_result(submission_id, grading_result)
 
     # Redirect to results page
-    #success_html = f"""
-    #<html>
+    # success_html = f"""
+    # <html>
     #  <head>
     #    <meta http-equiv="refresh" content="0; url=/exam-result?exam_id={exam_id}&student_id={student_id}">
     #  </head>
     #  <body>Grading your exam...</body>
-    #</html>
+    # </html>
     success_html = f"""
     <html>
       <head>

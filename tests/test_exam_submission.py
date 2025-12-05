@@ -31,7 +31,7 @@ def test_submit_exam_success(mocker, mock_firestore):
 
     # --- ASSERT ---
     assert status_code == 200
-    
+
     # [FIXED] Check for the Redirect message instead of "Grading your exam"
     assert "Redirecting to dashboard" in response_html
     assert "/student-dashboard?student_id=std_123" in response_html

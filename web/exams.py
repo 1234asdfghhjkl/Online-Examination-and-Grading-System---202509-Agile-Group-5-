@@ -2,7 +2,12 @@ from urllib.parse import parse_qs
 import html
 
 from core.validation import validate_exam, validate_exam_date, validate_exam_times
-from services.exam_service import save_exam_draft, publish_exam, get_exam_by_id, check_grading_locked
+from services.exam_service import (
+    save_exam_draft,
+    publish_exam,
+    get_exam_by_id,
+    check_grading_locked,
+)
 from services.question_service import has_mcq_for_exam, has_short_for_exam
 from .template_engine import render
 
@@ -45,17 +50,28 @@ def get_create_exam():
     )
     return html_str, 200
 
+
 def get_edit_exam(exam_id: str):
     if not exam_id:
         # Redirect to exam list or show error if no ID is provided
         # For simplicity, we'll return an error page template
-        html_str = render("exam_edit.html", {"errors_html": '<div class="alert alert-danger">Error: Exam ID is missing.</div>'})
+        html_str = render(
+            "exam_edit.html",
+            {
+                "errors_html": '<div class="alert alert-danger">Error: Exam ID is missing.</div>'
+            },
+        )
         return html_str, 400
 
     exam = get_exam_by_id(exam_id)
-    
+
     if not exam:
-        html_str = render("exam_edit.html", {"errors_html": f'<div class="alert alert-danger">Error: Exam ID "{exam_id}" not found.</div>'})
+        html_str = render(
+            "exam_edit.html",
+            {
+                "errors_html": f'<div class="alert alert-danger">Error: Exam ID "{exam_id}" not found.</div>'
+            },
+        )
         return html_str, 404
 
     # Build context from exam data
@@ -66,10 +82,10 @@ def get_edit_exam(exam_id: str):
         "duration": str(exam.get("duration", "")),
         "exam_date": exam.get("exam_date", ""),
         # Success and error messages are empty on initial load
-        "success_html": "", 
+        "success_html": "",
         "errors_html": "",
         # start_time and end_time are not used in exam_edit.html, but keep them for safety if other components use the context.
-        "start_time": exam.get("start_time", "00:00"), 
+        "start_time": exam.get("start_time", "00:00"),
         "end_time": exam.get("end_time", "01:00"),
         "instructions": exam.get("instructions", ""),
     }
@@ -77,17 +93,20 @@ def get_edit_exam(exam_id: str):
     html_str = render("exam_edit.html", ctx)
     return html_str, 200
 
+
 # ---------- POST handlers ----------
 
 
 def post_edit_exam(body: str):
     form = _parse_form(body)
     exam_id = form.get("exam_id")
-    
+
     if not exam_id:
         # Check if exam_id is provided
         ctx = dict(form)
-        ctx["errors_html"] = '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        ctx["errors_html"] = (
+            '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        )
         html_str = render("exam_edit.html", ctx)
         return html_str, 400
 
@@ -97,7 +116,9 @@ def post_edit_exam(body: str):
     )
     errors.extend(validate_exam_date(form["exam_date"]))
     # NEW: Validate times, as they are now submitted by the form
-    errors.extend(validate_exam_times(form["start_time"], form["end_time"], form["duration"])) 
+    errors.extend(
+        validate_exam_times(form["start_time"], form["end_time"], form["duration"])
+    )
 
     # 2. Handle errors
     if errors:
@@ -113,10 +134,10 @@ def post_edit_exam(body: str):
         ctx["start_time"] = form["start_time"]
         ctx["end_time"] = form["end_time"]
         ctx["errors_html"] = errors_html
-        
+
         # --- FIX: Ensure success_html is present in the context on failure ---
-        ctx["success_html"] = "" 
-        
+        ctx["success_html"] = ""
+
         html_str = render("exam_edit.html", ctx)
         return html_str, 400
 
@@ -129,10 +150,10 @@ def post_edit_exam(body: str):
             duration=form["duration"],
             instructions=form["instructions"],
             exam_date=form["exam_date"],
-            start_time=form["start_time"], # <-- Use submitted time
-            end_time=form["end_time"],     # <-- Use submitted time
+            start_time=form["start_time"],  # <-- Use submitted time
+            end_time=form["end_time"],  # <-- Use submitted time
         )
-        
+
         # 4. Success
         success_html = """
         <div class="alert alert-success mb-3">
@@ -141,10 +162,10 @@ def post_edit_exam(body: str):
         """
         ctx = dict(form)
         ctx["success_html"] = success_html
-        ctx["errors_html"] = "" # Clear errors on success
+        ctx["errors_html"] = ""  # Clear errors on success
         html_str = render("exam_edit.html", ctx)
         return html_str, 200
-        
+
     except ValueError as e:
         # Handle cases where save_exam_draft might raise an exception
         errors_html = f"""
@@ -156,6 +177,7 @@ def post_edit_exam(body: str):
         ctx["errors_html"] = errors_html
         html_str = render("exam_edit.html", ctx)
         return html_str, 500
+
 
 def post_publish_exam(body: str):
     form = _parse_form(body)
@@ -422,23 +444,25 @@ def get_exam_list():
 
             # --- TIDY UI LOGIC ---
             if status == "published":
-                status_badge = '<span class="exam-status status-published">Published</span>'
-                
+                status_badge = (
+                    '<span class="exam-status status-published">Published</span>'
+                )
+
                 # --- CHECK GRADING DEADLINE ---
                 is_locked, lock_msg, _ = check_grading_locked(e_id)
-                
+
                 if is_locked:
                     # If locked, show disabled gray button
-                    grade_btn = f'''
+                    grade_btn = f"""
                     <button class="btn btn-sm btn-secondary" disabled title="{html.escape(lock_msg)}">
                         🔒 Grading Closed
                     </button>
-                    '''
+                    """
                 else:
                     # If open, show normal green button
                     grade_btn = f'<a href="/grade-submissions?exam_id={e_id}" class="btn btn-sm btn-success">Grade</a>'
 
-                # UPDATED ACTIONS: 
+                # UPDATED ACTIONS:
                 # 1. Removed "Student Test" button
                 # 2. Updated "Grade" button logic
                 actions = f"""
@@ -472,7 +496,6 @@ def get_exam_list():
                 </div>
             </div>
             """
-        
 
     html_str = render("exam_list.html", {"exam_list_html": exam_list_html})
     return html_str, 200

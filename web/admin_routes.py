@@ -8,8 +8,7 @@ from services.exam_service import (
     get_exam_by_id,
     set_result_release_date,
     calculate_exam_statistics,
-    finalize_exam_results
-    
+    finalize_exam_results,
 )
 from .template_engine import render
 from core.firebase_db import db
@@ -68,74 +67,90 @@ def get_admin_exam_list():
             description = html.escape(exam.get("description", "No description"))
             duration = exam.get("duration", 0)
             exam_date = exam.get("exam_date", "N/A")
-            
+
             # Get time information
             start_time = exam.get("start_time", "N/A")
             end_time = exam.get("end_time", "N/A")
-            
+
             # ========================================
             # GRADING DEADLINE STATUS
             # ========================================
             grading_deadline = exam.get("grading_deadline_date", "")
             grading_time = exam.get("grading_deadline_time", "23:59")
-            
+
             # Initialize flag to track if grading is allowed
-            is_grading_closed = False 
-            
+            is_grading_closed = False
+
             if grading_deadline:
                 try:
                     deadline_str = f"{grading_deadline} {grading_time}"
                     deadline_dt = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M")
                     now = datetime.now()
-                    
+
                     if now > deadline_dt:
                         grading_status = '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
-                        grading_display = f"Closed on {grading_deadline} at {grading_time}"
+                        grading_display = (
+                            f"Closed on {grading_deadline} at {grading_time}"
+                        )
                         is_grading_closed = True
                     else:
                         # Calculate time remaining
                         time_remaining = deadline_dt - now
                         days_remaining = time_remaining.days
                         hours_remaining = time_remaining.seconds // 3600
-                        
+
                         if days_remaining == 0 and hours_remaining < 24:
                             grading_status = f'<span class="badge bg-danger ms-2">⏰ {hours_remaining}h Left</span>'
                         elif days_remaining < 2:
                             grading_status = f'<span class="badge bg-warning text-dark ms-2">⚠️ {days_remaining}d Left</span>'
                         else:
                             grading_status = f'<span class="badge bg-info ms-2">📅 {days_remaining}d Left</span>'
-                        
-                        grading_display = f"Open until {grading_deadline} at {grading_time}"
-                        
+
+                        grading_display = (
+                            f"Open until {grading_deadline} at {grading_time}"
+                        )
+
                 except ValueError:
-                    grading_status = '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
-                    grading_display = f"{grading_deadline} at {grading_time} (Invalid format)"
+                    grading_status = (
+                        '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
+                    )
+                    grading_display = (
+                        f"{grading_deadline} at {grading_time} (Invalid format)"
+                    )
             else:
-                grading_status = '<span class="badge bg-secondary ms-2">No Deadline</span>'
+                grading_status = (
+                    '<span class="badge bg-secondary ms-2">No Deadline</span>'
+                )
                 grading_display = "Not set"
-            
+
             # ========================================
             # RESULT RELEASE STATUS
             # ========================================
             release_date = exam.get("result_release_date", "")
             release_time = exam.get("result_release_time", "00:00")
-            
+
             if release_date:
                 try:
                     release_datetime_str = f"{release_date} {release_time}"
-                    release_dt = datetime.strptime(release_datetime_str, "%Y-%m-%d %H:%M")
+                    release_dt = datetime.strptime(
+                        release_datetime_str, "%Y-%m-%d %H:%M"
+                    )
                     now = datetime.now()
-                    
+
                     if now >= release_dt:
                         release_status = '<span class="badge bg-success ms-2">✅ Results Released</span>'
                     else:
                         release_status = '<span class="badge bg-warning text-dark ms-2">📆 Scheduled</span>'
                 except ValueError:
-                    release_status = '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
+                    release_status = (
+                        '<span class="badge bg-secondary ms-2">⚠️ Invalid Date</span>'
+                    )
             else:
                 release_status = '<span class="badge bg-secondary ms-2">Not Set</span>'
-            
-            release_display = f"{release_date} at {release_time}" if release_date else "Not set"
+
+            release_display = (
+                f"{release_date} at {release_time}" if release_date else "Not set"
+            )
 
             # ========================================
             # CHECK IF RESULTS ARE FINALIZED
@@ -144,7 +159,7 @@ def get_admin_exam_list():
             finalized_badge = ""
             if is_finalized:
                 finalized_at = exam.get("finalized_at", "")
-                if finalized_at and hasattr(finalized_at, 'strftime'):
+                if finalized_at and hasattr(finalized_at, "strftime"):
                     finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
                 else:
                     finalized_at_str = str(finalized_at)
@@ -159,14 +174,14 @@ def get_admin_exam_list():
             # Conditional Logic for Grading Button
             # If grading is closed, REMOVE the button entirely.
             if is_grading_closed:
-                grade_button_html = "" 
+                grade_button_html = ""
             else:
-                grade_button_html = f'''
+                grade_button_html = f"""
                 <a href="/grade-submissions?exam_id={e_id}" 
                    class="btn btn-sm btn-success">
                    📝 Grade Submissions
                 </a>
-                '''
+                """
 
             exam_list_html += f"""
             <div class="exam-card">
@@ -236,7 +251,7 @@ def get_set_result_release(exam_id: str):
         return html_str, 400
 
     exam = get_exam_by_id(exam_id)
-    
+
     if not exam:
         html_str = render(
             "set_result_release.html",
@@ -276,10 +291,12 @@ def post_set_result_release(body: str):
     """
     form = _parse_form(body)
     exam_id = form.get("exam_id")
-    
+
     if not exam_id:
         ctx = dict(form)
-        ctx["errors_html"] = '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        ctx["errors_html"] = (
+            '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        )
         ctx["success_html"] = ""
         ctx["title"] = ""
         ctx["exam_date"] = ""
@@ -290,7 +307,9 @@ def post_set_result_release(body: str):
     exam = get_exam_by_id(exam_id)
     if not exam:
         ctx = dict(form)
-        ctx["errors_html"] = f'<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam "{exam_id}" not found.</div>'
+        ctx["errors_html"] = (
+            f'<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam "{exam_id}" not found.</div>'
+        )
         ctx["success_html"] = ""
         ctx["title"] = ""
         ctx["exam_date"] = ""
@@ -298,10 +317,7 @@ def post_set_result_release(body: str):
         return html_str, 404
 
     # Validation
-    errors = validate_result_release_date(
-        form["release_date"],
-        exam.get("exam_date")
-    )
+    errors = validate_result_release_date(form["release_date"], exam.get("exam_date"))
 
     if errors:
         error_items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
@@ -329,7 +345,7 @@ def post_set_result_release(body: str):
             release_date=form["release_date"],
             release_time=form["release_time"],
         )
-        
+
         success_html = """
         <div class="alert alert-success mb-3">
             <strong>Success!</strong> Result release date has been set.
@@ -346,7 +362,7 @@ def post_set_result_release(body: str):
         ctx["end_time"] = exam.get("end_time", "")
         html_str = render("set_result_release.html", ctx)
         return html_str, 200
-        
+
     except ValueError as e:
         errors_html = f"""
         <div class="alert alert-danger mb-3">
@@ -369,6 +385,7 @@ def post_set_result_release(body: str):
 # NEW: COMPREHENSIVE GRADING SETTINGS
 # ============================================================
 
+
 def get_grading_settings(exam_id: str):
     """
     GET handler for comprehensive grading and release settings
@@ -389,7 +406,7 @@ def get_grading_settings(exam_id: str):
         }
         html_str = render("admin_grading_setting.html", error_ctx)
         return html_str, 400
-    
+
     exam = get_exam_by_id(exam_id)
     if not exam:
         error_ctx = {
@@ -406,25 +423,22 @@ def get_grading_settings(exam_id: str):
         }
         html_str = render("admin_grading_setting.html", error_ctx)
         return html_str, 404
-    
+
     ctx = {
         "exam_id": exam.get("exam_id"),
         "title": exam.get("title", ""),
         "exam_date": exam.get("exam_date", ""),
         "exam_end_time": exam.get("end_time", ""),
-        
         # Grading deadline
         "grading_deadline_date": exam.get("grading_deadline_date", ""),
         "grading_deadline_time": exam.get("grading_deadline_time", "23:59"),
-        
         # Result release
         "release_date": exam.get("result_release_date", ""),
         "release_time": exam.get("result_release_time", "00:00"),
-        
         "errors_html": "",
         "success_html": "",
     }
-    
+
     html_str = render("admin_grading_setting.html", ctx)
     return html_str, 200
 
@@ -436,31 +450,35 @@ def post_grading_settings(body: str):
     """
     from core.validation import validate_grading_periods
     from services.exam_service import save_grading_settings
-    
+
     form = _parse_grading_form(body)
     exam_id = form.get("exam_id")
-    
+
     if not exam_id:
         error_ctx = dict(form)
-        error_ctx["errors_html"] = '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        error_ctx["errors_html"] = (
+            '<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam ID is missing.</div>'
+        )
         error_ctx["success_html"] = ""
         error_ctx["title"] = ""
         error_ctx["exam_date"] = ""
         error_ctx["exam_end_time"] = ""
         html_str = render("admin_grading_setting.html", error_ctx)
         return html_str, 400
-    
+
     exam = get_exam_by_id(exam_id)
     if not exam:
         error_ctx = dict(form)
-        error_ctx["errors_html"] = f'<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam "{html.escape(exam_id)}" not found.</div>'
+        error_ctx["errors_html"] = (
+            f'<div class="alert alert-danger mb-3"><strong>Error:</strong> Exam "{html.escape(exam_id)}" not found.</div>'
+        )
         error_ctx["success_html"] = ""
         error_ctx["title"] = ""
         error_ctx["exam_date"] = ""
         error_ctx["exam_end_time"] = ""
         html_str = render("admin_grading_setting.html", error_ctx)
         return html_str, 404
-    
+
     # VALIDATION
     errors = validate_grading_periods(
         exam_date=exam.get("exam_date"),
@@ -468,9 +486,9 @@ def post_grading_settings(body: str):
         grading_deadline_date=form["grading_deadline_date"],
         grading_deadline_time=form["grading_deadline_time"],
         release_date=form["release_date"],
-        release_time=form["release_time"]
+        release_time=form["release_time"],
     )
-    
+
     if errors:
         error_items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
         errors_html = f"""
@@ -487,7 +505,7 @@ def post_grading_settings(body: str):
         ctx["exam_end_time"] = exam.get("end_time", "")
         html_str = render("admin_grading_setting.html", ctx)
         return html_str, 400
-    
+
     # SAVE to Firebase
     try:
         save_grading_settings(
@@ -495,9 +513,9 @@ def post_grading_settings(body: str):
             grading_deadline_date=form["grading_deadline_date"],
             grading_deadline_time=form["grading_deadline_time"],
             release_date=form["release_date"],
-            release_time=form["release_time"]
+            release_time=form["release_time"],
         )
-        
+
         success_html = """
         <div class="alert alert-success mb-3">
             <h5 class="alert-heading">✅ Settings Saved Successfully!</h5>
@@ -516,7 +534,7 @@ def post_grading_settings(body: str):
         ctx["exam_end_time"] = exam.get("end_time", "")
         html_str = render("admin_grading_setting.html", ctx)
         return html_str, 200
-        
+
     except ValueError as e:
         errors_html = f"""
         <div class="alert alert-danger mb-3">
@@ -532,45 +550,46 @@ def post_grading_settings(body: str):
         ctx["exam_end_time"] = exam.get("end_time", "")
         html_str = render("admin_grading_setting.html", ctx)
         return html_str, 500
-    
+
+
 def get_ungraded_submissions(exam_id: str) -> list:
     """
     Get all submissions that still need grading
-    
+
     Args:
         exam_id: Exam identifier
-    
+
     Returns:
         List of ungraded submission dictionaries
     """
-    submissions_query = db.collection("submissions")\
-        .where("exam_id", "==", exam_id)\
-        .stream()
-    
+    submissions_query = (
+        db.collection("submissions").where("exam_id", "==", exam_id).stream()
+    )
+
     ungraded = []
     for doc in submissions_query:
         sub = doc.to_dict()
         sub["submission_id"] = doc.id
-        
+
         # Check if fully graded
         if not sub.get("mcq_graded") or not sub.get("sa_graded"):
             ungraded.append(sub)
-    
+
     return ungraded
 
 
 def get_all_exam_submissions(exam_id: str) -> list:
     """Get all submissions for an exam"""
-    submissions_query = db.collection("submissions")\
-        .where("exam_id", "==", exam_id)\
-        .stream()
-    
+    submissions_query = (
+        db.collection("submissions").where("exam_id", "==", exam_id).stream()
+    )
+
     submissions = []
     for doc in submissions_query:
         sub = doc.to_dict()
         sub["submission_id"] = doc.id
         submissions.append(sub)
-    
+
     return submissions
 
 
@@ -590,7 +609,7 @@ def get_finalize_exam(exam_id: str):
         </div>
         """
         return error_html, 400
-    
+
     exam = get_exam_by_id(exam_id)
     if not exam:
         error_html = f"""
@@ -603,15 +622,15 @@ def get_finalize_exam(exam_id: str):
         </div>
         """
         return error_html, 404
-    
+
     # Check if already finalized
     if exam.get("results_finalized"):
         finalized_at = exam.get("finalized_at", "")
-        if finalized_at and hasattr(finalized_at, 'strftime'):
+        if finalized_at and hasattr(finalized_at, "strftime"):
             finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
         else:
             finalized_at_str = str(finalized_at)
-        
+
         info_html = f"""
         <div class="container mt-5">
             <div class="alert alert-info">
@@ -623,11 +642,11 @@ def get_finalize_exam(exam_id: str):
         </div>
         """
         return info_html, 200
-    
+
     # Get all submissions
     all_submissions = get_all_exam_submissions(exam_id)
     ungraded = get_ungraded_submissions(exam_id)
-    
+
     # Calculate statistics
     if all_submissions:
         stats = calculate_exam_statistics(all_submissions)
@@ -638,12 +657,12 @@ def get_finalize_exam(exam_id: str):
             "highest_score": 0,
             "lowest_score": 0,
             "pass_rate": 0,
-            "grade_distribution": {}
+            "grade_distribution": {},
         }
-    
+
     # Check if can finalize
     can_finalize = len(ungraded) == 0 and len(all_submissions) > 0
-    
+
     # Build warning/error messages
     warning_html = ""
     if not all_submissions:
@@ -663,10 +682,10 @@ def get_finalize_exam(exam_id: str):
             if not sub.get("sa_graded"):
                 status.append("Short answers pending")
             ungraded_list += f"<li><strong>{html.escape(student_id)}</strong>: {', '.join(status)}</li>"
-        
+
         if len(ungraded) > 10:
             ungraded_list += f"<li><em>... and {len(ungraded) - 10} more</em></li>"
-        
+
         warning_html = f"""
         <div class="alert alert-warning">
             <h5>⚠️ Cannot Finalize Yet</h5>
@@ -678,12 +697,16 @@ def get_finalize_exam(exam_id: str):
             </a>
         </div>
         """
-    
+
     # Build statistics display
     grade_dist = stats.get("grade_distribution", {})
     grade_dist_html = ""
     for grade, count in grade_dist.items():
-        percentage = (count / stats["total_students"] * 100) if stats["total_students"] > 0 else 0
+        percentage = (
+            (count / stats["total_students"] * 100)
+            if stats["total_students"] > 0
+            else 0
+        )
         grade_dist_html += f"""
         <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="badge bg-secondary">{grade}</span>
@@ -695,7 +718,7 @@ def get_finalize_exam(exam_id: str):
             <span>{percentage:.1f}%</span>
         </div>
         """
-    
+
     stats_html = f"""
     <div class="row g-3 mb-4">
         <div class="col-md-3">
@@ -741,7 +764,7 @@ def get_finalize_exam(exam_id: str):
         </div>
     </div>
     """
-    
+
     # Build action buttons
     if can_finalize:
         action_html = f"""
@@ -765,7 +788,7 @@ def get_finalize_exam(exam_id: str):
             </a>
         </div>
         """
-    
+
     ctx = {
         "exam_id": exam_id,
         "exam_title": exam.get("title", ""),
@@ -774,7 +797,7 @@ def get_finalize_exam(exam_id: str):
         "action_html": action_html,
         "can_finalize": can_finalize,
     }
-    
+
     html_str = render("finalize_exam.html", ctx)
     return html_str, 200
 
@@ -785,11 +808,11 @@ def post_finalize_exam(body: str):
     This permanently locks all grading
     """
     from urllib.parse import parse_qs
-    
+
     data = parse_qs(body)
     exam_id = data.get("exam_id", [""])[0]
     admin_id = data.get("admin_id", ["admin"])[0]
-    
+
     if not exam_id:
         error_html = """
         <div class="container mt-5">
@@ -801,11 +824,11 @@ def post_finalize_exam(body: str):
         </div>
         """
         return error_html, 400
-    
+
     try:
         # Execute finalization
         result = finalize_exam_results(exam_id, admin_id)
-        
+
         success_html = f"""
         <html>
         <head>
@@ -840,7 +863,7 @@ def post_finalize_exam(body: str):
         </html>
         """
         return success_html, 200
-        
+
     except ValueError as e:
         error_html = f"""
         <html>
@@ -862,7 +885,7 @@ def post_finalize_exam(body: str):
         </html>
         """
         return error_html, 400
-    
+
     except Exception as e:
         error_html = f"""
         <html>

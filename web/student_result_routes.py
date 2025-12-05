@@ -21,19 +21,19 @@ def get_student_result_view(exam_id: str, student_id: str):
             <p>Missing exam ID or student ID.</p>
         </div>
         """
-        html_str = render("student_result.html", {
-            "content_html": content_html,
-            "student_id": student_id
-        })
+        html_str = render(
+            "student_result.html",
+            {"content_html": content_html, "student_id": student_id},
+        )
         return html_str, 400
-    
+
     # Check if results are released
     is_released, release_date, release_time = check_results_released(exam_id)
-    
+
     if not is_released:
         exam = get_exam_by_id(exam_id)
         exam_title = exam.get("title", "Exam") if exam else "Exam"
-        
+
         if release_date:
             release_display = f"{release_date} at {release_time}"
             content_html = f"""
@@ -59,16 +59,16 @@ def get_student_result_view(exam_id: str, student_id: str):
                 </p>
             </div>
             """
-        
-        html_str = render("student_result.html", {
-            "content_html": content_html,
-            "student_id": student_id
-        })
+
+        html_str = render(
+            "student_result.html",
+            {"content_html": content_html, "student_id": student_id},
+        )
         return html_str, 200
-    
+
     # Get student result
     result_data = get_student_result(exam_id, student_id)
-    
+
     if not result_data:
         content_html = """
         <div class="alert alert-warning">
@@ -76,17 +76,19 @@ def get_student_result_view(exam_id: str, student_id: str):
             <p>You have not submitted this exam yet.</p>
         </div>
         """
-        html_str = render("student_result.html", {
-            "content_html": content_html,
-            "student_id": student_id
-        })
+        html_str = render(
+            "student_result.html",
+            {"content_html": content_html, "student_id": student_id},
+        )
         return html_str, 404
-    
+
     # Build result HTML
     exam = result_data["exam"]
     submitted_at = result_data["submitted_at"]
-    submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M:%S") if submitted_at else "N/A"
-    
+    submitted_time = (
+        submitted_at.strftime("%Y-%m-%d %H:%M:%S") if submitted_at else "N/A"
+    )
+
     # Header with overall score
     content_html = f"""
     <div class="result-header">
@@ -122,18 +124,18 @@ def get_student_result_view(exam_id: str, student_id: str):
         <p class="mt-3 mb-0"><small>📅 Submitted: {submitted_time}</small></p>
     </div>
     """
-    
+
     # MCQ Results
     if result_data["mcq_results"]:
         content_html += """
         <h4 class="mb-3">📝 Multiple Choice Questions</h4>
         """
-        
+
         for q in result_data["mcq_results"]:
             is_correct = q["is_correct"]
             card_class = "correct-answer" if is_correct else "incorrect-answer"
             icon = "✅" if is_correct else "❌"
-            
+
             content_html += f"""
             <div class="question-card">
                 <h5>Question {q['question_no']} {icon} ({q['marks_obtained']}/{q['marks']} marks)</h5>
@@ -167,13 +169,13 @@ def get_student_result_view(exam_id: str, student_id: str):
                 </div>
             </div>
             """
-    
+
     # Short Answer Results
     if result_data["sa_results"]:
         content_html += """
         <h4 class="mb-3 mt-4">✍️ Short Answer Questions</h4>
         """
-        
+
         for q in result_data["sa_results"]:
             content_html += f"""
             <div class="question-card">
@@ -204,42 +206,46 @@ def get_student_result_view(exam_id: str, student_id: str):
                 ''' if q['feedback'] else ''}
             </div>
             """
-    
-    html_str = render("student_result.html", {
-        "content_html": content_html,
-        "student_id": student_id
-    })
+
+    html_str = render(
+        "student_result.html", {"content_html": content_html, "student_id": student_id}
+    )
     return html_str, 200
+
 
 def get_student_result_pdf(exam_id: str, student_id: str):
     """
     GET handler for downloading student result as PDF
     """
     from services.pdf_service import generate_result_pdf
-    
+
     if not exam_id or not student_id:
         return "Error: Missing exam ID or student ID", 400
-    
+
     # Check if results are released
     is_released, release_date, release_time = check_results_released(exam_id)
-    
+
     if not is_released:
         return "Error: Results not yet released", 403
-    
+
     # Get student result
     result_data = get_student_result(exam_id, student_id)
-    
+
     if not result_data:
         return "Error: No submission found", 404
-    
+
     # Generate PDF
     pdf_bytes = generate_result_pdf(result_data)
-    
+
     # Return PDF with appropriate headers
     exam = result_data["exam"]
     filename = f"result_{exam.get('title', 'exam').replace(' ', '_')}_{student_id}.pdf"
-    
-    return pdf_bytes, 200, {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': f'attachment; filename="{filename}"'
-    }
+
+    return (
+        pdf_bytes,
+        200,
+        {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

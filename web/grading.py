@@ -9,7 +9,10 @@ import html
 from urllib.parse import parse_qs
 
 from web.template_engine import render
-from services.exam_service import get_exam_by_id, check_grading_locked # Added check_grading_locked
+from services.exam_service import (
+    get_exam_by_id,
+    check_grading_locked,
+)  # Added check_grading_locked
 from services.short_answer_grading_service import (
     get_all_submissions_for_exam,
     get_submission_with_questions,
@@ -58,7 +61,7 @@ def get_grade_submissions(exam_id: str):
 
     # --- DEADLINE CHECK START ---
     is_locked, lock_msg, _ = check_grading_locked(exam_id)
-    
+
     lock_alert_html = ""
     if is_locked:
         lock_alert_html = f"""
@@ -111,12 +114,16 @@ def get_grade_submissions(exam_id: str):
             else:
                 # Normal logic
                 if fully_graded:
-                    status_badge = '<span class="status-badge graded">✅ Fully Graded</span>'
+                    status_badge = (
+                        '<span class="status-badge graded">✅ Fully Graded</span>'
+                    )
                     action_btn = """
                     <a href="" class="btn btn-sm btn-outline-success">View Results</a>
                     """
                 elif sa_graded:
-                    status_badge = '<span class="status-badge graded">✅ SA Graded</span>'
+                    status_badge = (
+                        '<span class="status-badge graded">✅ SA Graded</span>'
+                    )
                     action_btn = f"""
                     <a href="/grade-short-answers?submission_id={submission_id}" 
                        class="btn btn-sm btn-outline-primary">
@@ -124,7 +131,9 @@ def get_grade_submissions(exam_id: str):
                     </a>
                     """
                 elif mcq_graded:
-                    status_badge = '<span class="status-badge pending">⏳ SA Pending</span>'
+                    status_badge = (
+                        '<span class="status-badge pending">⏳ SA Pending</span>'
+                    )
                     action_btn = f"""
                     <a href="/grade-short-answers?submission_id={submission_id}" 
                        class="btn btn-sm btn-primary">
@@ -132,7 +141,9 @@ def get_grade_submissions(exam_id: str):
                     </a>
                     """
                 else:
-                    status_badge = '<span class="status-badge pending">⏳ Pending</span>'
+                    status_badge = (
+                        '<span class="status-badge pending">⏳ Pending</span>'
+                    )
                     action_btn = f"""
                     <a href="/grade-short-answers?submission_id={submission_id}" 
                        class="btn btn-sm btn-primary">
@@ -168,7 +179,7 @@ def get_grade_submissions(exam_id: str):
         {
             "exam_id": exam_id,
             "exam_title": exam.get("title", ""),
-            "message_html": lock_alert_html, # Pass the alert here
+            "message_html": lock_alert_html,  # Pass the alert here
             "submissions_list_html": submissions_list_html,
         },
     )
@@ -193,7 +204,7 @@ def get_grade_short_answers(submission_id: str):
 
     # --- DEADLINE CHECK START ---
     is_locked, lock_msg, _ = check_grading_locked(exam_id)
-    
+
     # Define attributes for read-only mode
     disabled_attr = "disabled" if is_locked else ""
     readonly_class = "bg-light" if is_locked else ""
@@ -275,9 +286,9 @@ def get_grade_short_answers(submission_id: str):
             <strong>🔒 {html.escape(lock_msg)}</strong>. Grading is disabled.
         </div>
         """
-        # We can hide the save button by injecting a style or script, 
-        # but for this template structure, we might need to rely on the disabled inputs 
-        # and maybe add a script to hide the submit button if possible, 
+        # We can hide the save button by injecting a style or script,
+        # but for this template structure, we might need to rely on the disabled inputs
+        # and maybe add a script to hide the submit button if possible,
         # or just accept that the button exists but does nothing (backend protection).
         # Assuming the template renders a "Save Grades" button at the bottom:
         # Since I can't edit the HTML template file here, relying on disabled inputs + backend check is best.
@@ -304,14 +315,14 @@ def get_grade_short_answers(submission_id: str):
             "questions_html": questions_html,
         },
     )
-    
+
     # Quick fix to hide submit button via CSS if locked
     if is_locked:
         html_str = html_str.replace(
-            '</head>', 
-            '<style>button[type="submit"] { display: none !important; }</style></head>'
+            "</head>",
+            '<style>button[type="submit"] { display: none !important; }</style></head>',
         )
-        
+
     return html_str, 200
 
 
@@ -336,16 +347,19 @@ def post_save_short_answer_grades(body: str):
     # --- SECURITY CHECK ---
     exam_id = submission.get("exam_id")
     is_locked, lock_msg, _ = check_grading_locked(exam_id)
-    
+
     if is_locked:
-        return f"""
+        return (
+            f"""
         <div style="padding: 20px; color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb;">
             <h2>⛔ Grading Rejected</h2>
             <p><strong>{html.escape(lock_msg)}</strong></p>
             <p>You cannot save grades after the deadline.</p>
             <a href="/grade-submissions?exam_id={exam_id}">Back to Submissions</a>
         </div>
-        """, 403
+        """,
+            403,
+        )
     # --- END SECURITY CHECK ---
 
     # Parse grades
