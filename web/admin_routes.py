@@ -1,14 +1,16 @@
 from urllib.parse import parse_qs
 import html
 from datetime import datetime
-
-from core.validation import validate_result_release_date
+from typing import Optional
+from services.user_service import parse_excel_data, bulk_create_users
+from core.validation import validate_result_release_date, validate_grading_periods
 from services.exam_service import (
     get_all_published_exams_for_admin,
     get_exam_by_id,
     set_result_release_date,
     calculate_exam_statistics,
     finalize_exam_results,
+    save_grading_settings,
 )
 from .template_engine import render
 from core.firebase_db import db
@@ -462,8 +464,7 @@ def post_grading_settings(body: str):
     POST handler to save grading deadline and result release settings
     Performs comprehensive validation
     """
-    from core.validation import validate_grading_periods
-    from services.exam_service import save_grading_settings
+    
 
     form = _parse_grading_form(body)
     exam_id = form.get("exam_id")
@@ -922,3 +923,123 @@ def post_finalize_exam(body: str):
         </html>
         """
         return error_html, 500
+
+# ============================================================
+# NEW: ACCOUNT IMPORT/CREATION ROUTES
+# ============================================================
+
+def get_account_import_page():
+    """
+    GET handler for the account import page
+    """
+    ctx = {
+        "success_html": "",
+        "errors_html": "",
+        "max_file_size": "2MB", # Display limit
+    }
+    html_str = render("admin_account_import.html", ctx)
+    return html_str, 200
+
+
+def post_import_accounts(
+    user_type: str, 
+    form_fields: dict[str, str], 
+    file_content: Optional[bytes], 
+    file_name: Optional[str]
+):
+    """
+    POST handler to process uploaded Excel data for account creation.
+    
+    Args:
+        user_type: 'lecturer' or 'student'.
+        form_fields: Dictionary of non-file form fields (parsed by server.py).
+        file_content: Bytes of the uploaded file.
+        file_name: The name of the uploaded file.
+    """
+    
+    ctx = {
+        "success_html": "",
+        "errors_html": "",
+        "max_file_size": "2MB",
+    }
+    
+    # 1. Validation Check: Was a file actually provided?
+    if not file_name or file_name.strip() == "":
+        ctx["errors_html"] = """
+        <div class="alert alert-danger">
+            <strong>Upload Failed:</strong> Please select an Excel file for import.
+        </div>
+        """
+        html_str = render("admin_account_import.html", ctx)
+        return html_str, 400
+        
+    if not file_content:
+        ctx["errors_html"] = """
+        <div class="alert alert-danger">
+            <strong>Upload Failed:</strong> File content was empty or unreadable by the server.
+        </div>
+        """
+        html_str = render("admin_account_import.html", ctx)
+        return html_str, 400
+
+    # --- REAL CREATION LOGIC ---
+    user_type_display = user_type.title()
+    
+    try:
+        # 2. Parse Excel data
+        users_list = parse_excel_data(file_content, user_type)
+        
+        # 3. Bulk create users in Firebase Auth & Firestore
+        stats = bulk_create_users(users_list, user_type)
+        
+        # 4. Success / Report
+        
+        summary_items = []
+        if stats['created'] > 0:
+            summary_items.append(f"Successfully **Created** {stats['created']} new {user_type_display} accounts.")
+        
+        if stats['failed'] > 0:
+            summary_items.append(f"**Failed** to create {stats['failed']} {user_type_display} accounts due to Firebase errors.")
+            
+            # Detailed error list
+            error_list_html = "".join(f"<li>{html.escape(e)}</li>" for e in stats['errors'])
+            error_section = f"""
+            <h6 class="mt-3">Detailed Errors:</h6>
+            <ul class="mb-0 small text-danger">
+                {error_list_html}
+            </ul>
+            """
+        else:
+            error_section = ""
+
+
+        success_html = f"""
+        <div class="alert alert-success">
+            <h5>✅ Account Import Successful!</h5>
+            <p>Processed **{stats['total']}** records from **{html.escape(file_name)}**.</p>
+            <ul>
+                {"".join(f"<li>{item}</li>" for item in summary_items)}
+            </ul>
+            {error_section if stats['failed'] > 0 else ""}
+        </div>
+        """
+        ctx["success_html"] = success_html
+        return render("admin_account_import.html", ctx), 200
+
+    except Exception as e:
+        # Handle parsing errors or critical service errors
+        error_message = f"Critical Import Error: {html.escape(str(e))}"
+        
+        # Check if the error is a missing column/format issue
+        if "Missing required columns" in str(e) or "No valid user records found" in str(e):
+             error_message = f"File Format Error: {html.escape(str(e))}"
+
+        errors_html = f"""
+        <div class="alert alert-danger">
+            <h5>❌ Import Failed!</h5>
+            <p class="mb-0">**Reason:** {error_message}</p>
+            <p class="mb-0 mt-2">Please ensure the file is a valid Excel (XLSX) and follows the specified format.</p>
+        </div>
+        """
+        ctx["errors_html"] = errors_html
+        return render("admin_account_import.html", ctx), 400

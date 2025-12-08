@@ -1,14 +1,21 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
+from io import BytesIO 
+from cgi import parse_header, parse_multipart 
+
+# Import authentication routes
+from web.auth_routes import get_login_page, post_login
 
 from web.admin_routes import (
     get_admin_exam_list,
     get_set_result_release,
     post_set_result_release,
-    get_grading_settings,  # NEW
-    get_finalize_exam,  # NEW
-    post_grading_settings,  # NEW
-    post_finalize_exam,  # NEW
+    get_grading_settings,  
+    get_finalize_exam,  
+    post_grading_settings,  
+    post_finalize_exam, 
+    get_account_import_page, 
+    post_import_accounts, 
 )
 
 from web.template_engine import STATIC_DIR
@@ -37,6 +44,59 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+        
+    def _parse_multipart_form(self) -> tuple[dict, bytes | None, str | None]:
+        """
+        Parses multipart/form-data for file uploads.
+        Returns (form_fields, file_content_bytes, file_name).
+        """
+        ctype, pdict = parse_header(self.headers.get("Content-Type"))
+        
+        if ctype != 'multipart/form-data':
+            return {}, None, None
+
+        # Convert boundary to bytes
+        pdict['boundary'] = pdict['boundary'].encode('utf-8')
+        content_length = int(self.headers.get('Content-Length'))
+        
+        # Read the entire body
+        body = self.rfile.read(content_length)
+
+        # Use cgi.parse_multipart (requires BytesIO)
+        form_data = parse_multipart(BytesIO(body), pdict)
+
+        form_fields = {}
+        file_content = None
+        file_name = None
+
+        for key, values in form_data.items():
+            
+            # FIX: Safely determine the key string, handling bytes or str
+            if isinstance(key, bytes):
+                key_str = key.decode('utf-8')
+            elif isinstance(key, str):
+                key_str = key
+            else:
+                continue # Skip unhandled key types
+            # END FIX
+
+            if key_str == 'excel_file':
+                if values and isinstance(values[0], bytes):
+                    file_content = values[0] 
+                    
+                    if self.headers.get('Content-Disposition'):
+                        _, cd_pdict = parse_header(self.headers.get('Content-Disposition'))
+                        file_name = cd_pdict.get('filename')
+
+            elif key_str == 'excel_file_placeholder':
+                 file_name = values[0].decode('utf-8') if values and isinstance(values[0], bytes) else values[0] if values else None
+                 form_fields[key_str] = file_name
+            else:
+                value_str = values[0].decode('utf-8') if values and isinstance(values[0], bytes) else values[0] if values else ""
+                form_fields[key_str] = value_str
+                
+        return form_fields, file_content, file_name
+
 
     # ---------- GET ----------
     def do_GET(self):
@@ -44,8 +104,15 @@ class Handler(BaseHTTPRequestHandler):
         path = parsed.path
         query = parse_qs(parsed.query)
 
+        # ========================================
+        # LOGIN / ROOT ROUTE
+        # ========================================
+        if path == "/" or path == "/login":
+            html_str, status = get_login_page()
+            self._send_html(html_str, status)
+
         # Admin/Lecturer routes
-        if path in ("/", "/create-exam"):
+        elif path == "/create-exam":
             html_str, status = exams.get_create_exam()
             self._send_html(html_str, status)
 
@@ -71,34 +138,34 @@ class Handler(BaseHTTPRequestHandler):
             self._send_html(html_str, status)
 
         # ------------------------------
-        # ADMIN ROUTES (NEW & ENHANCED)
+        # ADMIN ROUTES
         # ------------------------------
-
-        # Enhanced Admin Exam List
         elif path == "/admin/exam-list":
             html_str, status = get_admin_exam_list()
             self._send_html(html_str, status)
 
-        # NEW: Comprehensive grading settings
         elif path == "/admin/grading-settings":
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_grading_settings(exam_id)
             self._send_html(html_str, status)
 
-        # NEW: Finalize exam (GET)
         elif path == "/admin/finalize-exam":
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_finalize_exam(exam_id)
             self._send_html(html_str, status)
 
-        # Legacy route (kept)
         elif path.startswith("/admin/set-result-release"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_set_result_release(exam_id)
             self._send_html(html_str, status)
+            
+        elif path == "/admin/import-accounts":
+            html_str, status = get_account_import_page()
+            self._send_html(html_str, status)
 
         # ------------------------------
-
+        # EXAM BUILDER ROUTES
+        # ------------------------------
         elif path.startswith("/mcq-builder"):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = mcq.get_mcq_builder(exam_id)
@@ -121,14 +188,15 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/debug-time":
             from services.exam_timing import get_server_time
-
             server_time = get_server_time()
             html_str = (
                 f"<h1>Server Time: {server_time.strftime('%Y-%m-%d %H:%M:%S %Z')}</h1>"
             )
             self._send_html(html_str, 200)
 
-        # Student routes
+        # ------------------------------
+        # STUDENT ROUTES
+        # ------------------------------
         elif path == "/student-dashboard":
             sid = query.get("student_id", ["test_student_01"])[0]
             html_str, status = student_exam.get_student_dashboard(sid)
@@ -165,7 +233,9 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(pdf_bytes)
             return
 
-        # API
+        # ------------------------------
+        # API ROUTES
+        # ------------------------------
         elif path == "/api/check-exam-status":
             exam_id = query.get("exam_id", [""])[0]
             student_id = query.get("student_id", [""])[0]
@@ -175,14 +245,12 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/grade-submissions":
             exam_id = query.get("exam_id", [""])[0]
             from web import grading
-
             html_str, status = grading.get_grade_submissions(exam_id)
             self._send_html(html_str, status)
 
         elif path == "/grade-short-answers":
             submission_id = query.get("submission_id", [""])[0]
             from web import grading
-
             html_str, status = grading.get_grade_short_answers(submission_id)
             self._send_html(html_str, status)
 
@@ -195,13 +263,51 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---------- POST ----------
     def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(length).decode("utf-8")
-
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
 
+        # ========================================
+        # LOGIN ROUTE
+        # ========================================
+        if path == "/login":
+            length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(length).decode("utf-8")
+            
+            html_str, status, redirect_url = post_login(body)
+            
+            if redirect_url:
+                # Redirect on successful login
+                self.send_response(302)
+                self.send_header("Location", redirect_url)
+                self.end_headers()
+            else:
+                # Show error page
+                self._send_html(html_str, status)
+            return
+
+        # -----------------------------------
+        # FILE UPLOAD HANDLER
+        # -----------------------------------
+        if path == "/admin/import-accounts-upload":
+            form_fields, file_content_bytes, file_name = self._parse_multipart_form()
+            user_type = query.get("type", [""])[0] 
+            
+            html_str, status = post_import_accounts(
+                user_type=user_type, 
+                form_fields=form_fields,
+                file_content=file_content_bytes,
+                file_name=file_name,
+            )
+            self._send_html(html_str, status)
+            return
+            
+        # -----------------------------------
+        # STANDARD POST (for non-file forms)
+        # -----------------------------------
+        length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(length).decode("utf-8")
+        
         # Lecturer routes
         if path == "/submit-exam":
             html_str, status = exams.post_submit_exam(body)
@@ -267,14 +373,12 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/save-short-answer-grades":
             from web import grading
-
             html_str, status = grading.post_save_short_answer_grades(body)
             self._send_html(html_str, status)
 
         # -----------------------------------
-        # NEW ADMIN POST ROUTES
+        # ADMIN POST ROUTES
         # -----------------------------------
-
         elif path == "/admin/save-grading-settings":
             html_str, status = post_grading_settings(body)
             self._send_html(html_str, status)
@@ -283,11 +387,10 @@ class Handler(BaseHTTPRequestHandler):
             html_str, status = post_finalize_exam(body)
             self._send_html(html_str, status)
 
-        # Legacy (keep)
         elif path == "/admin/set-result-release":
             html_str, status = post_set_result_release(body)
             self._send_html(html_str, status)
-
+            
         else:
             self.send_error(404, "Not Found")
 
@@ -323,13 +426,21 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     try:
+        # Initialize admin account on startup
+        from services.auth_service import create_admin_account
+        create_admin_account()
+        
         httpd = HTTPServer((HOST, PORT), Handler)
         print(f"Serving at http://{HOST}:{PORT}")
-        print(f"\nLecturer: http://{HOST}:{PORT}/exam-list")
-        print(
-            f"\nStudent: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01"
-        )
-        print(f"\nAdmin: http://{HOST}:{PORT}/admin/exam-list")
+        print("\n=== LOGIN CREDENTIALS ===")
+        print("Admin: Use Admin ID 'A001' + IC number '010101070101'")
+        print("Lecturer: Use Lecturer ID + IC number (e.g., L001 / 950101011234)")
+        print("Student: Use Student ID + IC number (e.g., 100123 / 030505010567)")
+        print("\n=== ROUTES ===")
+        print(f"Login: http://{HOST}:{PORT}/login")
+        print(f"Lecturer: http://{HOST}:{PORT}/exam-list")
+        print(f"Student: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01")
+        print(f"Admin: http://{HOST}:{PORT}/admin/exam-list")
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nServer stopped by user.")
