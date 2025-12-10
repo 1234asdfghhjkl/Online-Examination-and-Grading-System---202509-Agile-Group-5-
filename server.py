@@ -1,7 +1,10 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
-from io import BytesIO 
-from cgi import parse_header, parse_multipart 
+
+# Replaced 'cgi' with 'email' library for Python 3.13+ compatibility
+from email.parser import BytesParser
+from email import policy
+from urllib.parse import urlparse, parse_qs
 
 # Import authentication routes
 from web.auth_routes import get_login_page, post_login
@@ -10,19 +13,22 @@ from web.admin_routes import (
     get_admin_exam_list,
     get_set_result_release,
     post_set_result_release,
-    get_grading_settings,  
-    get_finalize_exam,  
-    post_grading_settings,  
-    post_finalize_exam, 
-    get_account_import_page, 
-    post_import_accounts, 
+    get_grading_settings,
+    get_finalize_exam,
+    post_grading_settings,
+    post_finalize_exam,
+    get_account_import_page,
+    post_import_accounts,
+    get_admin_student_list,
 )
 
 from web.template_engine import STATIC_DIR
-from web import exams, mcq, short_answer, student_exam
-from urllib.parse import urlparse, parse_qs
+from web import exams, mcq, short_answer, student_exam, password_routes
 from web.student_result_routes import get_student_result_view
 from web.student_result_routes import get_student_result_pdf
+
+# NEW: Import the profile routes module
+from web import profile_routes
 
 HOST = "localhost"
 PORT = 8000
@@ -44,59 +50,73 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
-        
+
     def _parse_multipart_form(self) -> tuple[dict, bytes | None, str | None]:
         """
-        Parses multipart/form-data for file uploads.
+        Parses multipart/form-data using the modern 'email' library.
+        (Fixes the Python 3.13 'cgi' module deprecation error).
         Returns (form_fields, file_content_bytes, file_name).
         """
-        ctype, pdict = parse_header(self.headers.get("Content-Type"))
-        
-        if ctype != 'multipart/form-data':
+        content_type = self.headers.get("Content-Type", "")
+        if "multipart/form-data" not in content_type:
             return {}, None, None
 
-        # Convert boundary to bytes
-        pdict['boundary'] = pdict['boundary'].encode('utf-8')
-        content_length = int(self.headers.get('Content-Length'))
-        
-        # Read the entire body
+        # 1. Read the full request body
+        try:
+            content_length = int(self.headers.get("Content-Length", 0))
+        except (ValueError, TypeError):
+            content_length = 0
+
         body = self.rfile.read(content_length)
 
-        # Use cgi.parse_multipart (requires BytesIO)
-        form_data = parse_multipart(BytesIO(body), pdict)
+        # 2. Reconstruct the full HTTP message (Headers + Body) for the parser
+        # The parser needs the Content-Type header to know the boundary
+        headers_list = []
+        for key, value in self.headers.items():
+            headers_list.append(f"{key}: {value}")
+        headers_str = "\r\n".join(headers_list)
+
+        # Combine headers and body into a single bytes object
+        full_msg_bytes = headers_str.encode("utf-8") + b"\r\n\r\n" + body
+
+        # 3. Parse using BytesParser
+        msg = BytesParser(policy=policy.HTTP).parsebytes(full_msg_bytes)
 
         form_fields = {}
         file_content = None
         file_name = None
 
-        for key, values in form_data.items():
-            
-            # FIX: Safely determine the key string, handling bytes or str
-            if isinstance(key, bytes):
-                key_str = key.decode('utf-8')
-            elif isinstance(key, str):
-                key_str = key
-            else:
-                continue # Skip unhandled key types
-            # END FIX
+        # 4. Extract parts
+        if msg.is_multipart():
+            for part in msg.iter_parts():
+                # Extract 'name' (field name) and 'filename'
+                part_name = part.get_param("name", header="Content-Disposition")
+                part_filename = part.get_filename()
 
-            if key_str == 'excel_file':
-                if values and isinstance(values[0], bytes):
-                    file_content = values[0] 
-                    
-                    if self.headers.get('Content-Disposition'):
-                        _, cd_pdict = parse_header(self.headers.get('Content-Disposition'))
-                        file_name = cd_pdict.get('filename')
+                # Get binary data
+                part_data = part.get_payload(decode=True)
 
-            elif key_str == 'excel_file_placeholder':
-                 file_name = values[0].decode('utf-8') if values and isinstance(values[0], bytes) else values[0] if values else None
-                 form_fields[key_str] = file_name
-            else:
-                value_str = values[0].decode('utf-8') if values and isinstance(values[0], bytes) else values[0] if values else ""
-                form_fields[key_str] = value_str
-                
+                if part_name == "excel_file":
+                    if part_data:
+                        file_content = part_data
+                    if part_filename:
+                        file_name = part_filename
+
+                elif part_name == "excel_file_placeholder":
+                    # This field sometimes carries the filename or overrides it
+                    val = part_data.decode("utf-8") if part_data else None
+                    form_fields[part_name] = val
+                    if val:
+                        file_name = val
+
+                elif part_name:
+                    # Regular form fields
+                    if part_data:
+                        form_fields[part_name] = part_data.decode("utf-8")
+                    else:
+                        form_fields[part_name] = ""
+
         return form_fields, file_content, file_name
-
 
     # ---------- GET ----------
     def do_GET(self):
@@ -109,6 +129,22 @@ class Handler(BaseHTTPRequestHandler):
         # ========================================
         if path == "/" or path == "/login":
             html_str, status = get_login_page()
+            self._send_html(html_str, status)
+
+        # ========================================
+        # PROFILE ROUTE (NEW)
+        # ========================================
+        elif path == "/profile":
+            user_id = query.get("user_id", [""])[0]
+            # If no ID provided, we could error or default to a test user
+            # For this setup, if empty, the route handler will show an error.
+            html_str, status = profile_routes.get_profile_page(user_id)
+            self._send_html(html_str, status)
+
+        # NEW: Change Password GET
+        elif path == "/change-password":
+            user_id = query.get("user_id", [""])[0]
+            html_str, status = password_routes.get_change_password_page(user_id)
             self._send_html(html_str, status)
 
         # Admin/Lecturer routes
@@ -158,9 +194,13 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_set_result_release(exam_id)
             self._send_html(html_str, status)
-            
+
         elif path == "/admin/import-accounts":
             html_str, status = get_account_import_page()
+            self._send_html(html_str, status)
+
+        elif path == "/admin/student-list":
+            html_str, status = get_admin_student_list()
             self._send_html(html_str, status)
 
         # ------------------------------
@@ -188,6 +228,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/debug-time":
             from services.exam_timing import get_server_time
+
             server_time = get_server_time()
             html_str = (
                 f"<h1>Server Time: {server_time.strftime('%Y-%m-%d %H:%M:%S %Z')}</h1>"
@@ -245,12 +286,14 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/grade-submissions":
             exam_id = query.get("exam_id", [""])[0]
             from web import grading
+
             html_str, status = grading.get_grade_submissions(exam_id)
             self._send_html(html_str, status)
 
         elif path == "/grade-short-answers":
             submission_id = query.get("submission_id", [""])[0]
             from web import grading
+
             html_str, status = grading.get_grade_short_answers(submission_id)
             self._send_html(html_str, status)
 
@@ -273,9 +316,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/login":
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length).decode("utf-8")
-            
+
             html_str, status, redirect_url = post_login(body)
-            
+
             if redirect_url:
                 # Redirect on successful login
                 self.send_response(302)
@@ -291,23 +334,23 @@ class Handler(BaseHTTPRequestHandler):
         # -----------------------------------
         if path == "/admin/import-accounts-upload":
             form_fields, file_content_bytes, file_name = self._parse_multipart_form()
-            user_type = query.get("type", [""])[0] 
-            
+            user_type = query.get("type", [""])[0]
+
             html_str, status = post_import_accounts(
-                user_type=user_type, 
+                user_type=user_type,
                 form_fields=form_fields,
                 file_content=file_content_bytes,
                 file_name=file_name,
             )
             self._send_html(html_str, status)
             return
-            
+
         # -----------------------------------
         # STANDARD POST (for non-file forms)
         # -----------------------------------
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length).decode("utf-8")
-        
+
         # Lecturer routes
         if path == "/submit-exam":
             html_str, status = exams.post_submit_exam(body)
@@ -362,6 +405,12 @@ class Handler(BaseHTTPRequestHandler):
             html_str, status = get_student_result_view(exam_id, student_id)
             self._send_html(html_str, status)
 
+        # Change Password POST
+        elif path == "/change-password":
+            user_id = query.get("user_id", [""])[0]
+            html_str, status, _ = password_routes.post_change_password(user_id, body)
+            self._send_html(html_str, status)
+
         # API
         elif path == "/api/auto-submit-exam":
             json_str, status = student_exam.api_auto_submit_exam(body)
@@ -373,6 +422,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/save-short-answer-grades":
             from web import grading
+
             html_str, status = grading.post_save_short_answer_grades(body)
             self._send_html(html_str, status)
 
@@ -390,7 +440,7 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/admin/set-result-release":
             html_str, status = post_set_result_release(body)
             self._send_html(html_str, status)
-            
+
         else:
             self.send_error(404, "Not Found")
 
@@ -428,8 +478,9 @@ if __name__ == "__main__":
     try:
         # Initialize admin account on startup
         from services.auth_service import create_admin_account
+
         create_admin_account()
-        
+
         httpd = HTTPServer((HOST, PORT), Handler)
         print(f"Serving at http://{HOST}:{PORT}")
         print("\n=== LOGIN CREDENTIALS ===")
@@ -438,8 +489,11 @@ if __name__ == "__main__":
         print("Student: Use Student ID + IC number (e.g., 100123 / 030505010567)")
         print("\n=== ROUTES ===")
         print(f"Login: http://{HOST}:{PORT}/login")
+        print(f"Profile: http://{HOST}:{PORT}/profile?user_id=100123")
         print(f"Lecturer: http://{HOST}:{PORT}/exam-list")
-        print(f"Student: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01")
+        print(
+            f"Student: http://{HOST}:{PORT}/student-dashboard?student_id=test_student_01"
+        )
         print(f"Admin: http://{HOST}:{PORT}/admin/exam-list")
         httpd.serve_forever()
     except KeyboardInterrupt:
