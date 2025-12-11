@@ -32,39 +32,39 @@ def render(template_name: str, context=None) -> str:
     # ==========================================
     def process_conditionals(html: str, ctx: dict) -> str:
         # Pattern: {% if variable %} content1 {% else %} content2 {% endif %}
-        pattern = r'\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*else\s*%\}(.*?)\{%\s*endif\s*%\}'
-        
+        pattern = r"\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*else\s*%\}(.*?)\{%\s*endif\s*%\}"
+
         def replacer(match):
             var_name = match.group(1)
             true_content = match.group(2)
             false_content = match.group(3)
-            
+
             # Check if variable exists and is truthy
             var_value = ctx.get(var_name, "")
             if var_value and var_value != "":
                 return true_content
             else:
                 return false_content
-        
+
         html = re.sub(pattern, replacer, html, flags=re.DOTALL)
-        
+
         # Pattern: {% if variable %} content {% endif %} (no else)
-        pattern_no_else = r'\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*endif\s*%\}'
-        
+        pattern_no_else = r"\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*endif\s*%\}"
+
         def replacer_no_else(match):
             var_name = match.group(1)
             content = match.group(2)
-            
+
             var_value = ctx.get(var_name, "")
             if var_value and var_value != "":
                 return content
             else:
                 return ""
-        
+
         html = re.sub(pattern_no_else, replacer_no_else, html, flags=re.DOTALL)
-        
+
         return html
-    
+
     # Process conditionals FIRST
     content_html = process_conditionals(content_html, context)
 
@@ -75,7 +75,7 @@ def render(template_name: str, context=None) -> str:
         # Handle {{variable|safe}} - no escaping
         placeholder_safe = "{{" + key + "|safe}}"
         content_html = content_html.replace(placeholder_safe, str(value))
-        
+
         # Handle {{variable}} - with escaping
         placeholder = "{{" + key + "}}"
         if key.endswith("_html") or key.endswith("_json"):

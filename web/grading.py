@@ -400,6 +400,7 @@ def post_save_short_answer_grades(body: str):
     """
     return redirect_html, 200
 
+
 def get_view_submission_result(submission_id: str):
     """
     GET handler for viewing detailed grading results for a submission
@@ -448,10 +449,12 @@ def get_view_submission_result(submission_id: str):
 
     exam_id = submission.get("exam_id")
     exam = get_exam_by_id(exam_id)
-    
+
     student_id = submission.get("student_id", "Unknown")
     submitted_at = submission.get("submitted_at")
-    submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M:%S") if submitted_at else "N/A"
+    submitted_time = (
+        submitted_at.strftime("%Y-%m-%d %H:%M:%S") if submitted_at else "N/A"
+    )
 
     # Get scores
     mcq_score = submission.get("mcq_score", 0)
@@ -500,7 +503,7 @@ def get_view_submission_result(submission_id: str):
 
     if question_results:
         mcq_results_html += '<h4 class="mb-3">📝 Multiple Choice Questions</h4>'
-        
+
         for q_result in question_results:
             q_no = q_result.get("question_no")
             question_text = q_result.get("question_text", "")
@@ -510,8 +513,20 @@ def get_view_submission_result(submission_id: str):
             marks = q_result.get("marks", 0)
             marks_obtained = q_result.get("marks_obtained", 0)
 
-            icon = "✅" if is_correct else "❌" if student_answer != "Not answered" else "⚠️"
-            card_class = "border-success" if is_correct else "border-danger" if student_answer != "Not answered" else "border-warning"
+            icon = (
+                "✅"
+                if is_correct
+                else "❌" if student_answer != "Not answered" else "⚠️"
+            )
+            card_class = (
+                "border-success"
+                if is_correct
+                else (
+                    "border-danger"
+                    if student_answer != "Not answered"
+                    else "border-warning"
+                )
+            )
 
             mcq_results_html += f"""
             <div class="card mb-3 {card_class}">
@@ -536,7 +551,7 @@ def get_view_submission_result(submission_id: str):
 
     if sa_questions:
         sa_results_html += '<h4 class="mb-3 mt-4">✏️ Short Answer Questions</h4>'
-        
+
         for q in sa_questions:
             q_no = q.get("question_no")
             question_text = q.get("question_text", "")

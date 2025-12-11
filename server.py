@@ -25,8 +25,12 @@ from web.template_engine import STATIC_DIR
 from web import exams, mcq, short_answer, student_exam, password_routes
 from web.student_result_routes import get_student_result_view
 from web.student_result_routes import get_student_result_pdf
+
 # ADDED: Import for student_filter_service
-from services.student_filter_service import get_available_filters, get_students_by_filters 
+from services.student_filter_service import (
+    get_available_filters,
+    get_students_by_filters,
+)
 
 # NEW: Import the profile routes module
 from web import profile_routes
@@ -150,7 +154,8 @@ class Handler(BaseHTTPRequestHandler):
 
         # Admin/Lecturer routes
         elif path == "/create-exam":
-            html_str, status = exams.get_create_exam()
+            lecturer_id = query.get("lecturer_id", [""])[0]  # <--- Capture ID from URL
+            html_str, status = exams.get_create_exam(lecturer_id)
             self._send_html(html_str, status)
 
         elif path.startswith("/exam-edit"):
@@ -167,10 +172,13 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/exam-list":
             search = query.get("q", [""])[0]
             sort = query.get("sort", ["date"])[0]
+            lecturer_id = query.get("lecturer_id", [""])[0]
+
             html_str, status = exams.get_exam_list(
                 success_message="",
                 search=search,
                 sort=sort,
+                lecturer_id=lecturer_id,
             )
             self._send_html(html_str, status)
 
@@ -194,16 +202,18 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/admin/import-accounts":
             html_str, status = get_account_import_page()
             self._send_html(html_str, status)
-            
+
         elif path == "/admin/performance-report":
             exam_id = query.get("exam_id", [""])[0]
             from web.admin_performance_routes import get_performance_report
+
             html_str, status = get_performance_report(exam_id)
             self._send_html(html_str, status)
-            
+
         elif path == "/view-submission-result":
             submission_id = query.get("submission_id", [""])[0]
             from web import grading
+
             html_str, status = grading.get_view_submission_result(submission_id)
             self._send_html(html_str, status)
 
@@ -290,28 +300,29 @@ class Handler(BaseHTTPRequestHandler):
             student_id = query.get("student_id", [""])[0]
             json_str, status = student_exam.api_check_exam_status(exam_id, student_id)
             self._send_json(json_str, status)
-            
+
         # ADDED: New API route for student filter options
         elif path == "/api/get-filter-options":
             # Get current exam_id if provided in query
             exam_id = query.get("exam_id", [""])[0]
-            
+
             available = get_available_filters()
             combinations = get_students_by_filters()
-            
+
             response_data = {
                 "majors": available.get("majors", []),
                 "years": available.get("years", []),
                 "semesters": available.get("semesters", []),
-                "combinations": combinations
+                "combinations": combinations,
             }
-            
+
             # If exam_id is provided, also return current filters
             if exam_id:
                 from services.student_filter_service import get_exam_filters
+
                 current_filters = get_exam_filters(exam_id)
                 response_data["current_filters"] = current_filters
-            
+
             json_str = json.dumps(response_data)
             self._send_json(json_str, 200)
 

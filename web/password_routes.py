@@ -4,13 +4,14 @@ from typing import Tuple
 import html
 from web.template_engine import render
 from firebase_admin import auth, exceptions
+
 # FIX: Import authentication service
 from services.auth_service import authenticate_user
 
 
 def get_change_password_page(user_id: str) -> Tuple[str, int]:
     """Renders the Change Password form."""
-    
+
     # FIX: Return 400 if ID is missing (Required by tests)
     if not user_id:
         context = {

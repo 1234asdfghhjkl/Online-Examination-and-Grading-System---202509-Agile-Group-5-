@@ -2,6 +2,7 @@
 
 from typing import Tuple
 from web.template_engine import render
+
 # FIX 1: Import module instead of function so patching works
 import services.user_service as user_service
 
@@ -9,7 +10,7 @@ import services.user_service as user_service
 # Helper function to infer the user role from the ID structure
 def infer_user_role(user_id: str) -> str:
     """Infers role based on ID convention (L for Lecturer, A for Admin, else Student)."""
-    if not user_id: 
+    if not user_id:
         return "Student"
     if user_id.upper().startswith("L"):
         return "Lecturer"
@@ -54,16 +55,14 @@ def get_profile_page(user_id: str) -> Tuple[str, int]:
         "page_title": f"{user_role} Profile",
         "user_id": user_id,
         "user_role": user_role,
-        "profile_data_html": "",  
+        "profile_data_html": "",
         "error_message": "",
         "error_display_style": "none",
         "dashboard_url": dashboard_url,
     }
 
     if not profile_data:
-        context["error_message"] = (
-            f"User not found: {user_id}"
-        )
+        context["error_message"] = f"User not found: {user_id}"
         context["error_display_style"] = "block"
         return render("profile.html", context), 404
 
@@ -87,7 +86,10 @@ def get_profile_page(user_id: str) -> Tuple[str, int]:
             ("Name", profile_data.get("name")),
             ("Faculty", profile_data.get("faculty")),
             ("Email", profile_data.get("email")),
-            ("Contact", profile_data.get("email")), # Assuming contact is same as email or separate field
+            (
+                "Contact",
+                profile_data.get("email"),
+            ),  # Assuming contact is same as email or separate field
             ("IC Number", profile_data.get("ic")),
         ]
 
@@ -103,8 +105,10 @@ def get_profile_page(user_id: str) -> Tuple[str, int]:
     profile_html = ""
     for label, value in fields:
         # Handle None or empty strings gracefully
-        display_val = str(value) if value is not None and str(value).strip() != "" else "N/A"
-        
+        display_val = (
+            str(value) if value is not None and str(value).strip() != "" else "N/A"
+        )
+
         profile_html += f"""
         <div class="row mb-3 border-bottom pb-2">
             <div class="col-sm-4 text-muted">{label}</div>

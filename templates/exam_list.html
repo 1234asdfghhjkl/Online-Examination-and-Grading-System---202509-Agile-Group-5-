@@ -15,11 +15,11 @@
     <div class="container">
         <span class="navbar-brand fw-bold">📚 Online Exam System</span>
         <div class="d-flex">
-            <a href="/profile?user_id=L001" class="btn btn-outline-light btn-sm btn-rounded me-2">
+            <a href="/profile?user_id={{lecturer_id}} " class="btn btn-outline-light btn-sm btn-rounded me-2">
                 My Profile
             </a>
             
-            <a href="/create-exam" class="btn btn-light btn-sm btn-rounded fw-bold me-2">
+            <a href="/create-exam?lecturer_id={{lecturer_id}}" class="btn btn-light btn-sm btn-rounded fw-bold me-2">
                 + Create New Exam
             </a>
             

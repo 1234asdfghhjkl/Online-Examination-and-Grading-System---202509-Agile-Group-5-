@@ -13,6 +13,7 @@ from services.exam_service import (
 from .template_engine import render
 from core.firebase_db import db
 
+
 def _parse_form(body: str) -> dict:
     """Parse form data from POST request"""
     data = parse_qs(body)
@@ -87,9 +88,7 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now > deadline_dt:
-                        grading_status = (
-                            '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
-                        )
+                        grading_status = '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
                         grading_display = (
                             f"Closed on {grading_deadline} at {grading_time}"
                         )

@@ -50,7 +50,7 @@
                             {{mcq_button_label}}
                         </a>
                     </div>
-                    
+
                 </div>
             </div>
 
@@ -61,9 +61,9 @@
                         Create open-ended questions that require short written responses.
                     </p>
                     <div class="d-flex justify-content-center">
-                       <a href="/short-builder?exam_id={{exam_id}}" class="{{short_button_class}}">
+                        <a href="/short-builder?exam_id={{exam_id}}" class="{{short_button_class}}">
                             {{short_button_label}}
-                        </a> 
+                        </a>
                     </div>
                 </div>
             </div>
@@ -76,6 +76,8 @@
             </a>
             <form action="/publish-exam" method="POST">
                 <input type="hidden" name="exam_id" value="{{exam_id}}">
+                <input type="hidden" name="lecturer_id" value="{{lecturer_id}}">
+
                 <input type="hidden" name="title" value="{{title}}">
                 <input type="hidden" name="description" value="{{description}}">
                 <input type="hidden" name="duration" value="{{duration}}">
