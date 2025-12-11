@@ -129,7 +129,7 @@ class AdminExamListViewTest(unittest.TestCase):
 
         # 3. Configure the mock datetime to return our fixed MOCK_NOW
         self.mock_datetime.now.return_value = MOCK_NOW
-        
+
         # IMPORTANT: Pass through strptime/min so logic doesn't break
         self.mock_datetime.strptime = datetime.strptime
         self.mock_datetime.min = datetime.min
@@ -164,9 +164,11 @@ class AdminExamListViewTest(unittest.TestCase):
         # Diff is 28 hours (1 day, 4 hours).
         # Logic: if days < 2: show Warning badge.
         self.assertIn("Open Grading, Scheduled Release (1d Left)", normalized_content)
-        self.assertIn("badge bg-warning text-dark ms-2", normalized_content)  # FIXED: Expect Warning, not Info
+        self.assertIn(
+            "badge bg-warning text-dark ms-2", normalized_content
+        )  # FIXED: Expect Warning, not Info
         self.assertIn("1d Left", normalized_content)
-        
+
         # Check Buttons
         self.assertIn('href="/grade-submissions?exam_id=EID-101"', normalized_content)
         # Finalize button should NOT be present
@@ -176,7 +178,9 @@ class AdminExamListViewTest(unittest.TestCase):
         self.assertIn("Closed Grading, Results Released", normalized_content)
         self.assertIn("Grading Closed", normalized_content)
         self.assertIn("badge bg-danger ms-2", normalized_content)
-        self.assertNotIn('href="/grade-submissions?exam_id=EID-102"', normalized_content)
+        self.assertNotIn(
+            'href="/grade-submissions?exam_id=EID-102"', normalized_content
+        )
 
         # --- EID-103: Urgent Grading (<24h Left) ---
         self.assertIn("Urgent Grading (&lt;24h Left)", normalized_content)
@@ -194,7 +198,9 @@ class AdminExamListViewTest(unittest.TestCase):
         self.assertIn("Finalized on 2025-11-27 15:00", normalized_content)
         # NOTE: Deadline is still in future (Nov 29), so badge shows "1d Left", NOT "Grading Closed"
         # However, button is removed because is_grading_closed=True
-        self.assertNotIn('href="/grade-submissions?exam_id=EID-105"', normalized_content)
+        self.assertNotIn(
+            'href="/grade-submissions?exam_id=EID-105"', normalized_content
+        )
 
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ class ExamHandlerTest(unittest.TestCase):
             exam_date="2025-12-01",
             start_time="10:00",
             end_time="11:00",
+            created_by="",
         )
 
         # Check that the redirect/review page is rendered

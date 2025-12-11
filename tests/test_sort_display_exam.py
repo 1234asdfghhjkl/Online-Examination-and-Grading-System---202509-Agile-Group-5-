@@ -46,7 +46,7 @@ class ExamListDisplayAndSortTests(unittest.TestCase):
     # 1. Load exam list on page load + table layout + actions column
     # ------------------------------------------------------------------
     @patch("web.exams.render")
-    @patch("services.exam_service.get_all_exams")
+    @patch("web.exams.get_all_exams")
     def test_exam_list_renders_with_title_duration_date_and_actions(
         self, mock_get_all_exams, render
     ):
@@ -96,7 +96,7 @@ class ExamListDisplayAndSortTests(unittest.TestCase):
     # 3. Sort by date (latest exam_date first)
     # ------------------------------------------------------------------
     @patch("web.exams.render")
-    @patch("services.exam_service.get_all_exams")
+    @patch("web.exams.get_all_exams")
     def test_sort_by_date_uses_latest_exam_first(self, mock_get_all_exams, render):
         """Sort by date should order exams by exam_date descending (latest first)."""
 
@@ -119,7 +119,7 @@ class ExamListDisplayAndSortTests(unittest.TestCase):
     # 4. Sort by title (A → Z)
     # ------------------------------------------------------------------
     @patch("web.exams.render")
-    @patch("services.exam_service.get_all_exams")
+    @patch("web.exams.get_all_exams")
     def test_sort_by_title_orders_alphabetically(self, mock_get_all_exams, render):
         """Sort by title should order exams alphabetically by title."""
 
@@ -143,7 +143,7 @@ class ExamListDisplayAndSortTests(unittest.TestCase):
     # 5. Search by exam title
     # ------------------------------------------------------------------
     @patch("web.exams.render")
-    @patch("services.exam_service.get_all_exams")
+    @patch("web.exams.get_all_exams")
     def test_search_filters_by_exam_title(self, mock_get_all_exams, render):
         """Search should filter exams by title (case-insensitive)."""
 
