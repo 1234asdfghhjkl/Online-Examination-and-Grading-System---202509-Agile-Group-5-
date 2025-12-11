@@ -1,136 +1,129 @@
 # services/auth_service.py
-from firebase_admin import auth, firestore
+import requests
+from firebase_admin import auth
 from core.firebase_db import db
 from typing import Dict, Any
 
+# ==========================================================
+# 🔑 CONFIGURATION REQUIRED
+# ==========================================================
+# PASTE YOUR WEB API KEY HERE
+FIREBASE_WEB_API_KEY = "AIzaSyBFW2Pzvp3l3BNBtBE5Wx2zEdK4xvhu3IY"
+# ==========================================================
 
-def authenticate_user(user_id: str, ic: str, role: str) -> Dict[str, Any]:
+
+def authenticate_user(user_id: str, password: str, role: str) -> Dict[str, Any]:
     """
-    Authenticate a user with user ID, IC number, and role
-    
-    Args:
-        user_id: User's ID (student_id or lecturer_id)
-        ic: User's IC number
-        role: User's role (student, lecturer, admin)
-    
-    Returns:
-        Dict containing user data if successful
-        
-    Raises:
-        ValueError: If authentication fails
+    Authenticate a user using Firebase Auth (REST API).
+    This supports both the default password (IC) and changed passwords.
     """
-    
-    # For admin, use hardcoded credentials (keep existing)
+
+    # 1. SPECIAL CASE: Admin Hardcoded Login (Keep existing backdoor)
     if role == "admin":
-        # UPDATED: Admin can log in with User ID 'A001' and IC '010101070101'
-        if (user_id == "A001" and ic == "010101070101") :
+        if user_id == "A001" and password == "010101070101":
             return {
                 "uid": "admin",
                 "user_id": "admin",
                 "role": "admin",
-                "name": "System Administrator"
+                "name": "System Administrator",
             }
-        else:
-            raise ValueError("Invalid admin credentials")
-    
+
+    # 2. Get User Email from Firestore using user_id
+    # We need the email to login via Firebase Auth REST API.
     try:
-        # Get user profile from Firestore by user_id
-        user_doc = db.collection('users').document(user_id).get()
-        
+        user_doc = db.collection("users").document(user_id).get()
         if not user_doc.exists:
-            raise ValueError("User ID not found in system")
-        
+            raise ValueError("User ID not found.")
+
         user_data = user_doc.to_dict()
-        
+        email = user_data.get("email")
+
         # Verify role matches
-        if user_data.get('role') != role:
-            raise ValueError(f"Access denied. Please login as {user_data.get('role', 'the correct role')}")
-        
-        # Verify IC number matches (use stored ic field)
-        if user_data.get('ic') != ic:
-            raise ValueError("Invalid IC number")
-        
-        # Get email from user_data
-        email = user_data.get('email', '')
-        
+        if user_data.get("role") != role:
+            raise ValueError(f"Access denied. Please login as {user_data.get('role')}")
+
+    except Exception as e:
+        raise ValueError(f"Account lookup failed: {str(e)}")
+
+    # 3. Verify Password using Firebase Auth REST API
+    url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_WEB_API_KEY}"
+
+    payload = {"email": email, "password": password, "returnSecureToken": True}
+
+    response = requests.post(url, json=payload)
+
+    if response.status_code == 200:
+        # Login Successful
+        auth_response = response.json()
+        firebase_uid = auth_response.get("localId")
+
         return {
-            "uid": user_data.get('uid', user_id),
+            "uid": firebase_uid,
             "user_id": user_id,
             "email": email,
-            "role": user_data.get('role'),
-            "name": user_data.get('name', 'Unknown'),
-            "student_id": user_data.get('student_id'),
-            "lecturer_id": user_data.get('lecturer_id'),
-            "ic": user_data.get('ic'),
+            "role": user_data.get("role"),
+            "name": user_data.get("name", "Unknown"),
+            "student_id": user_data.get("student_id"),
+            "lecturer_id": user_data.get("lecturer_id"),
+            "ic": user_data.get("ic"),  # Keep for reference
         }
-        
-    except Exception as e:
-        raise ValueError(f"Authentication failed: {str(e)}")
+
+    elif response.status_code == 400:
+        error_data = response.json()
+        message = error_data.get("error", {}).get("message", "")
+
+        if "INVALID_PASSWORD" in message:
+            raise ValueError("Invalid password.")
+        elif "EMAIL_NOT_FOUND" in message:
+            raise ValueError("Account not found.")
+        elif "USER_DISABLED" in message:
+            raise ValueError("Account disabled.")
+        else:
+            raise ValueError("Authentication failed.")
+    else:
+        raise ValueError("System authentication error.")
 
 
 def get_redirect_url(role: str, user_data: Dict[str, Any]) -> str:
-    """
-    Get the redirect URL based on user role
-    
-    Args:
-        role: User's role
-        user_data: User data dictionary
-    
-    Returns:
-        URL to redirect to after login
-    """
-    
+    """Get the redirect URL based on user role"""
     if role == "admin":
         return "/admin/exam-list"
     elif role == "lecturer":
         return "/exam-list"
     elif role == "student":
-        student_id = user_data.get('student_id', user_data.get('uid', 'guest'))
+        student_id = user_data.get("student_id", user_data.get("uid", "guest"))
         return f"/student-dashboard?student_id={student_id}"
     else:
         return "/"
 
 
 def create_admin_account():
-    """
-    Create a default admin account if it doesn't exist
-    This should be run once during system setup
-    """
-    # Define the admin IC number
+    """Helper to ensure admin exists (run on startup)"""
     ADMIN_IC = "010101070101"
-    
     try:
-        # Try to get admin user
         try:
             auth.get_user_by_email("admin@system.com")
             print("Admin account already exists")
             return
         except auth.UserNotFoundError:
             pass
-        
-        # Create admin user in Firebase Auth
-        auth.create_user( # Removed assignment to unused variable 'admin_user'
+
+        auth.create_user(
             uid="admin",
             email="admin@system.com",
-            password="admin123", # Password for Firebase Auth
-            display_name="System Administrator"
+            password="admin123",
+            display_name="System Administrator",
         )
-        
-        # Create admin profile in Firestore
-        db.collection('users').document("admin").set({
-            'uid': 'admin',
-            'email': 'admin@system.com',
-            'name': 'System Administrator',
-            'role': 'admin',
-            'ic': ADMIN_IC, # Store the IC number in Firestore
-            'created_at': firestore.SERVER_TIMESTAMP
-        })
-        
+        db.collection("users").document("admin").set(
+            {
+                "uid": "admin",
+                "email": "admin@system.com",
+                "name": "System Administrator",
+                "role": "admin",
+                "ic": ADMIN_IC,
+                "created_at": "2024-01-01",
+            }
+        )
         print("Admin account created successfully")
-        print("User ID: admin")
-        print(f"IC Number: {ADMIN_IC} (Used for ID/IC login)")
-        print("Email: admin@system.com")
-        print("Password: admin123 (Used for Email/Password login)")
-        
     except Exception as e:
-        print(f"Error creating admin account: {e}")
+        print(f"Error creating admin: {e}")

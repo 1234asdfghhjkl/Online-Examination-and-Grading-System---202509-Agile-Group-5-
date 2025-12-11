@@ -8,8 +8,6 @@ from services.exam_service import (
     get_all_published_exams_for_admin,
     get_exam_by_id,
     set_result_release_date,
-    calculate_exam_statistics,
-    finalize_exam_results,
     save_grading_settings,
 )
 from .template_engine import render
@@ -218,6 +216,7 @@ def get_admin_exam_list():
                     </a>
 
                     {grade_button_html}
+<<<<<<< HEAD
                     
                     <a href="/admin/performance-report?exam_id={e_id}"
                        class="btn btn-sm btn-info">
@@ -230,6 +229,8 @@ def get_admin_exam_list():
                        🔒 Finalize Results
                     </a>
                     '''}
+=======
+>>>>>>> c4dadf46b6f6019f5ae6d59094a1c1d087396f16
                 </div>
             </div>
             """
@@ -468,7 +469,6 @@ def post_grading_settings(body: str):
     POST handler to save grading deadline and result release settings
     Performs comprehensive validation
     """
-    
 
     form = _parse_grading_form(body)
     exam_id = form.get("exam_id")
@@ -612,325 +612,10 @@ def get_all_exam_submissions(exam_id: str) -> list:
     return submissions
 
 
-def get_finalize_exam(exam_id: str):
-    """
-    GET handler for finalization confirmation page
-    Shows statistics and checks if exam is ready to finalize
-    """
-    if not exam_id:
-        error_html = """
-        <div class="container mt-5">
-            <div class="alert alert-danger">
-                <h4>Error</h4>
-                <p>Missing exam ID</p>
-                <a href="/admin/exam-list" class="btn btn-secondary">Back to Exam List</a>
-            </div>
-        </div>
-        """
-        return error_html, 400
-
-    exam = get_exam_by_id(exam_id)
-    if not exam:
-        error_html = f"""
-        <div class="container mt-5">
-            <div class="alert alert-danger">
-                <h4>Error</h4>
-                <p>Exam "{html.escape(exam_id)}" not found</p>
-                <a href="/admin/exam-list" class="btn btn-secondary">Back to Exam List</a>
-            </div>
-        </div>
-        """
-        return error_html, 404
-
-    # Check if already finalized
-    if exam.get("results_finalized"):
-        finalized_at = exam.get("finalized_at", "")
-        if finalized_at and hasattr(finalized_at, "strftime"):
-            finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
-        else:
-            finalized_at_str = str(finalized_at)
-
-        info_html = f"""
-        <div class="container mt-5">
-            <div class="alert alert-info">
-                <h4> Already Finalized</h4>
-                <p>This exam was finalized on <strong>{finalized_at_str}</strong></p>
-                <p>Results are locked and cannot be changed.</p>
-                <a href="/admin/exam-list" class="btn btn-primary">Back to Exam List</a>
-            </div>
-        </div>
-        """
-        return info_html, 200
-
-    # Get all submissions
-    all_submissions = get_all_exam_submissions(exam_id)
-    ungraded = get_ungraded_submissions(exam_id)
-
-    # Calculate statistics
-    if all_submissions:
-        stats = calculate_exam_statistics(all_submissions)
-    else:
-        stats = {
-            "total_students": 0,
-            "average_percentage": 0,
-            "highest_score": 0,
-            "lowest_score": 0,
-            "pass_rate": 0,
-            "grade_distribution": {},
-        }
-
-    # Check if can finalize
-    can_finalize = len(ungraded) == 0 and len(all_submissions) > 0
-
-    # Build warning/error messages
-    warning_html = ""
-    if not all_submissions:
-        warning_html = """
-        <div class="alert alert-danger">
-            <h5> Cannot Finalize</h5>
-            <p>No submissions found for this exam. Students must complete the exam first.</p>
-        </div>
-        """
-    elif ungraded:
-        ungraded_list = ""
-        for sub in ungraded[:10]:  # Show first 10
-            student_id = sub.get("student_id", "Unknown")
-            status = []
-            if not sub.get("mcq_graded"):
-                status.append("MCQ pending")
-            if not sub.get("sa_graded"):
-                status.append("Short answers pending")
-            ungraded_list += f"<li><strong>{html.escape(student_id)}</strong>: {', '.join(status)}</li>"
-
-        if len(ungraded) > 10:
-            ungraded_list += f"<li><em>... and {len(ungraded) - 10} more</em></li>"
-
-        warning_html = f"""
-        <div class="alert alert-warning">
-            <h5> Cannot Finalize Yet</h5>
-            <p><strong>{len(ungraded)}</strong> submission(s) still need grading:</p>
-            <ul class="mb-0">{ungraded_list}</ul>
-            <hr>
-            <a href="/grade-submissions?exam_id={exam_id}" class="btn btn-primary mt-2">
-                Go to Grading Interface
-            </a>
-        </div>
-        """
-
-    # Build statistics display
-    grade_dist = stats.get("grade_distribution", {})
-    grade_dist_html = ""
-    for grade, count in grade_dist.items():
-        percentage = (
-            (count / stats["total_students"] * 100)
-            if stats["total_students"] > 0
-            else 0
-        )
-        grade_dist_html += f"""
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="badge bg-secondary">{grade}</span>
-            <div class="progress flex-grow-1 mx-3" style="height: 25px;">
-                <div class="progress-bar bg-primary" style="width: {percentage}%">
-                    {count} students
-                </div>
-            </div>
-            <span>{percentage:.1f}%</span>
-        </div>
-        """
-
-    stats_html = f"""
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-primary">{stats['total_students']}</h3>
-                    <p class="text-muted mb-0">Total Students</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-success">{stats['average_percentage']:.1f}%</h3>
-                    <p class="text-muted mb-0">Average Score</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-info">{stats['highest_score']:.1f}%</h3>
-                    <p class="text-muted mb-0">Highest Score</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-warning">{stats['pass_rate']:.1f}%</h3>
-                    <p class="text-muted mb-0">Pass Rate</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0"> Grade Distribution</h5>
-        </div>
-        <div class="card-body">
-            {grade_dist_html if grade_dist_html else '<p class="text-muted">No data available</p>'}
-        </div>
-    </div>
-    """
-
-    # Build action buttons
-    if can_finalize:
-        action_html = f"""
-        <form method="POST" action="/admin/finalize-exam-confirm"
-              onsubmit="return confirm(' IMPORTANT: Once finalized, grades CANNOT be changed.\\n\\nAre you sure you want to finalize this exam?');">
-            <input type="hidden" name="exam_id" value="{exam_id}">
-            <input type="hidden" name="admin_id" value="admin">
-            <div class="d-flex gap-3 justify-content-center">
-                <a href="/admin/exam-list" class="btn btn-secondary btn-lg px-5">Cancel</a>
-                <button type="submit" class="btn btn-danger btn-lg px-5">
-                     Finalize & Lock Results
-                </button>
-            </div>
-        </form>
-        """
-    else:
-        action_html = f"""
-        <div class="text-center">
-            <a href="/grade-submissions?exam_id={exam_id}" class="btn btn-primary btn-lg px-5">
-                 Complete Grading First
-            </a>
-        </div>
-        """
-
-    ctx = {
-        "exam_id": exam_id,
-        "exam_title": exam.get("title", ""),
-        "warning_html": warning_html,
-        "stats_html": stats_html,
-        "action_html": action_html,
-        "can_finalize": can_finalize,
-    }
-
-    html_str = render("finalize_exam.html", ctx)
-    return html_str, 200
-
-
-def post_finalize_exam(body: str):
-    """
-    POST handler to execute finalization
-    This permanently locks all grading
-    """
-    from urllib.parse import parse_qs
-
-    data = parse_qs(body)
-    exam_id = data.get("exam_id", [""])[0]
-    admin_id = data.get("admin_id", ["admin"])[0]
-
-    if not exam_id:
-        error_html = """
-        <div class="container mt-5">
-            <div class="alert alert-danger">
-                <h4>Error</h4>
-                <p>Missing exam ID</p>
-                <a href="/admin/exam-list" class="btn btn-secondary">Back</a>
-            </div>
-        </div>
-        """
-        return error_html, 400
-
-    try:
-        # Execute finalization
-        result = finalize_exam_results(exam_id, admin_id)
-
-        success_html = f"""
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Finalization Complete</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-            <link rel="stylesheet" href="/static/styles.css">
-        </head>
-        <body class="bg-light">
-            <div class="container mt-5">
-                <div class="alert alert-success">
-                    <h2> Exam Results Finalized Successfully!</h2>
-                    <hr>
-                    <h5>Summary:</h5>
-                    <ul>
-                        <li><strong>Total Students:</strong> {result['total_students']}</li>
-                        <li><strong>Average Score:</strong> {result['average_score']:.2f}%</li>
-                        <li><strong>Pass Rate:</strong> {result['pass_rate']:.2f}%</li>
-                        <li><strong>Finalized At:</strong> {result['finalized_at'].strftime('%Y-%m-%d %H:%M:%S')}</li>
-                    </ul>
-                    <hr>
-                    <p class="mb-0">
-                        <strong> All grades are now PERMANENTLY LOCKED.</strong><br>
-                        Students will be able to view their results according to the release schedule.
-                    </p>
-                </div>
-                <div class="text-center">
-                    <a href="/admin/exam-list" class="btn btn-primary btn-lg">Return to Exam List</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        return success_html, 200
-
-    except ValueError as e:
-        error_html = f"""
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Finalization Error</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        </head>
-        <body class="bg-light">
-            <div class="container mt-5">
-                <div class="alert alert-danger">
-                    <h4> Cannot Finalize Exam</h4>
-                    <p><strong>Error:</strong> {html.escape(str(e))}</p>
-                    <hr>
-                    <a href="/admin/finalize-exam?exam_id={exam_id}" class="btn btn-secondary">Go Back</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        return error_html, 400
-
-    except Exception as e:
-        error_html = f"""
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>System Error</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        </head>
-        <body class="bg-light">
-            <div class="container mt-5">
-                <div class="alert alert-danger">
-                    <h4> System Error</h4>
-                    <p><strong>Unexpected error:</strong> {html.escape(str(e))}</p>
-                    <p>Please contact the system administrator.</p>
-                    <hr>
-                    <a href="/admin/exam-list" class="btn btn-secondary">Return to Exam List</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        return error_html, 500
-
 # ============================================================
 # NEW: ACCOUNT IMPORT/CREATION ROUTES
 # ============================================================
+
 
 def get_account_import_page():
     """
@@ -939,46 +624,50 @@ def get_account_import_page():
     ctx = {
         "success_html": "",
         "errors_html": "",
-        "max_file_size": "2MB", # Display limit
+        "max_file_size": "2MB",  # Display limit
     }
     html_str = render("admin_account_import.html", ctx)
     return html_str, 200
 
 
 def post_import_accounts(
-    user_type: str, 
-    form_fields: dict[str, str], 
-    file_content: Optional[bytes], 
-    file_name: Optional[str]
+    user_type: str,
+    form_fields: dict[str, str],
+    file_content: Optional[bytes],
+    file_name: Optional[str],
 ):
     """
     POST handler to process uploaded Excel data for account creation.
-    
+
     Args:
         user_type: 'lecturer' or 'student'.
         form_fields: Dictionary of non-file form fields (parsed by server.py).
         file_content: Bytes of the uploaded file.
         file_name: The name of the uploaded file.
     """
-    
+
     ctx = {
         "success_html": "",
         "errors_html": "",
         "max_file_size": "2MB",
     }
-    
+
     # 1. Validation Check: Was a file actually provided?
     if not file_name or file_name.strip() == "":
-        ctx["errors_html"] = """
+        ctx[
+            "errors_html"
+        ] = """
         <div class="alert alert-danger">
             <strong>Upload Failed:</strong> Please select an Excel file for import.
         </div>
         """
         html_str = render("admin_account_import.html", ctx)
         return html_str, 400
-        
+
     if not file_content:
-        ctx["errors_html"] = """
+        ctx[
+            "errors_html"
+        ] = """
         <div class="alert alert-danger">
             <strong>Upload Failed:</strong> File content was empty or unreadable by the server.
         </div>
@@ -988,25 +677,31 @@ def post_import_accounts(
 
     # --- REAL CREATION LOGIC ---
     user_type_display = user_type.title()
-    
+
     try:
         # 2. Parse Excel data
         users_list = parse_excel_data(file_content, user_type)
-        
+
         # 3. Bulk create users in Firebase Auth & Firestore
         stats = bulk_create_users(users_list, user_type)
-        
+
         # 4. Success / Report
-        
+
         summary_items = []
-        if stats['created'] > 0:
-            summary_items.append(f"Successfully **Created** {stats['created']} new {user_type_display} accounts.")
-        
-        if stats['failed'] > 0:
-            summary_items.append(f"**Failed** to create {stats['failed']} {user_type_display} accounts due to Firebase errors.")
-            
+        if stats["created"] > 0:
+            summary_items.append(
+                f"Successfully **Created** {stats['created']} new {user_type_display} accounts."
+            )
+
+        if stats["failed"] > 0:
+            summary_items.append(
+                f"**Failed** to create {stats['failed']} {user_type_display} accounts due to Firebase errors."
+            )
+
             # Detailed error list
-            error_list_html = "".join(f"<li>{html.escape(e)}</li>" for e in stats['errors'])
+            error_list_html = "".join(
+                f"<li>{html.escape(e)}</li>" for e in stats["errors"]
+            )
             error_section = f"""
             <h6 class="mt-3">Detailed Errors:</h6>
             <ul class="mb-0 small text-danger">
@@ -1015,7 +710,6 @@ def post_import_accounts(
             """
         else:
             error_section = ""
-
 
         success_html = f"""
         <div class="alert alert-success">
@@ -1033,10 +727,12 @@ def post_import_accounts(
     except Exception as e:
         # Handle parsing errors or critical service errors
         error_message = f"Critical Import Error: {html.escape(str(e))}"
-        
+
         # Check if the error is a missing column/format issue
-        if "Missing required columns" in str(e) or "No valid user records found" in str(e):
-             error_message = f"File Format Error: {html.escape(str(e))}"
+        if "Missing required columns" in str(e) or "No valid user records found" in str(
+            e
+        ):
+            error_message = f"File Format Error: {html.escape(str(e))}"
 
         errors_html = f"""
         <div class="alert alert-danger">
@@ -1047,3 +743,68 @@ def post_import_accounts(
         """
         ctx["errors_html"] = errors_html
         return render("admin_account_import.html", ctx), 400
+
+
+def get_admin_student_list():
+    """
+    GET handler for the Admin Student List page.
+    Fetches all users with role='student' from Firestore.
+    """
+    try:
+        # Fetch all students
+        # Note: In a real production app with thousands of users, you would use pagination (limit/offset).
+        # For this prototype, fetching all is acceptable.
+        students_ref = db.collection("users").where("role", "==", "student").stream()
+
+        students = []
+        for doc in students_ref:
+            s = doc.to_dict()
+            students.append(
+                {
+                    "student_id": s.get("student_id", "N/A"),
+                    "name": s.get("name", "N/A"),
+                    "email": s.get("email", "N/A"),
+                    "major": s.get("major", "N/A"),
+                    "year": s.get("year", "-"),
+                    "semester": s.get("semester", "-"),
+                    "ic": s.get("ic", "N/A"),
+                }
+            )
+
+        # Sort by Student ID
+        students.sort(key=lambda x: x["student_id"])
+
+        # Generate HTML rows
+        rows_html = ""
+        if not students:
+            rows_html = '<tr><td colspan="6" class="text-center text-muted">No students found. Import accounts to get started.</td></tr>'
+        else:
+            for s in students:
+                rows_html += f"""
+                <tr>
+                    <td><span class="fw-bold">{html.escape(str(s['student_id']))}</span></td>
+                    <td>{html.escape(str(s['name']))}</td>
+                    <td>{html.escape(str(s['email']))}</td>
+                    <td>{html.escape(str(s['major']))}</td>
+                    <td>Y{s['year']} S{s['semester']}</td>
+                    <td>
+                        <a href="/profile?user_id={s['student_id']}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                """
+
+        ctx = {"student_rows_html": rows_html, "total_count": len(students)}
+        return render("admin_student_list.html", ctx), 200
+
+    except Exception as e:
+        # Fallback error page
+        error_html = f"""
+        <div class="container mt-5">
+            <div class="alert alert-danger">
+                <h4>Error Fetching Students</h4>
+                <p>{str(e)}</p>
+                <a href="/admin/exam-list" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+        """
+        return error_html, 500

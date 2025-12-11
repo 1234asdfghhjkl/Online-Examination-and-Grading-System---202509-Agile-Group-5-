@@ -1,0 +1,32 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4">{{page_title}}</h2>
+
+            <div id="error-alert" class="alert alert-danger" role="alert" style="display: {{error_display_style}};">
+                <h4 class="alert-heading">Profile Error</h4>
+                <p>{{error_message}}</p>
+                <hr>
+                <p class="mb-0"><a href="/login">Go to Login Page</a></p>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{user_role}} Details (Read-Only)</h5>
+                </div>
+                <div class="card-body">
+
+                    <div id="profile-data">
+                        {{profile_data_html}}
+                    </div>
+
+                </div>
+                <div class="card-footer text-end">
+                    <a href="/change-password?user_id={{user_id}}" class="btn btn-warning me-2">Change Password</a>
+
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">Go Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
