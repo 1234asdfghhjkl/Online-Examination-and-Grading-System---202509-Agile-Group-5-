@@ -88,8 +88,12 @@ def get_redirect_url(role: str, user_data: Dict[str, Any]) -> str:
     """Get the redirect URL based on user role"""
     if role == "admin":
         return "/admin/exam-list"
+
     elif role == "lecturer":
-        return "/exam-list"
+        # FIX: Get the ID and append it to the URL
+        lecturer_id = user_data.get("lecturer_id", user_data.get("user_id", ""))
+        return f"/exam-list?lecturer_id={lecturer_id}"
+
     elif role == "student":
         student_id = user_data.get("student_id", user_data.get("uid", "guest"))
         return f"/student-dashboard?student_id={student_id}"

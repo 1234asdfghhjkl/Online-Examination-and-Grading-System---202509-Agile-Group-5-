@@ -1,6 +1,6 @@
 """
-Student Exam Handler - Updated with filtering
-Handles student exam access, timing, and submission with filter checks
+Student Exam Handler
+Handles student exam access, timing, submission, and dashboard rendering.
 """
 
 import json
@@ -21,7 +21,10 @@ from services.exam_timing import (
     get_server_time,
 )
 from services.student_filter_service import is_student_eligible
-from services.student_submission_service import get_student_submissions, get_student_performance_stats
+from services.student_submission_service import (
+    get_student_submissions,
+    get_student_performance_stats,
+)
 from core.firebase_db import db
 
 
@@ -117,8 +120,7 @@ def _build_questions_html(exam_id: str) -> str:
 
 def get_student_dashboard(student_id: str):
     """
-    Renders the student dashboard with filtered exams
-    Renders the student dashboard with a list of available exams, submissions, and performance stats.
+    Renders the student dashboard with filtered exams and logic to hide unreleased scores.
     """
 
     published_exams = get_all_published_exams()
@@ -126,13 +128,19 @@ def get_student_dashboard(student_id: str):
     # If no student ID is provided, default to a test one
     current_student_id = student_id if student_id else "test_student_01"
 
-    # Build available exams HTML - FILTER BY ELIGIBILITY
     # =========================================================
-    # 1. NEW: Get Performance Stats & Generate HTML
+    # 1. Performance Stats
     # =========================================================
     stats = get_student_performance_stats(current_student_id)
-    
-    if stats['has_data']:
+
+    # --- FIX: Define the helper function here ---
+    def fmt_stat(val):
+        """Helper to format stats: shows 'Pending' if value is '-'"""
+        return f"{val}%" if val != "-" else "Pending"
+
+    # --------------------------------------------
+
+    if stats["has_data"]:
         stats_html = f"""
         <div class="card bg-white border-0 shadow-sm mb-4">
             <div class="card-body p-4">
@@ -141,7 +149,7 @@ def get_student_dashboard(student_id: str):
                     <div class="col-md-3 col-6 mb-2">
                         <div class="p-3 rounded bg-light">
                             <div class="text-muted small">Average Score</div>
-                            <div class="fs-2 fw-bold text-primary">{stats['average']}%</div>
+                            <div class="fs-2 fw-bold text-primary">{fmt_stat(stats['average'])}</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6 mb-2">
@@ -153,13 +161,13 @@ def get_student_dashboard(student_id: str):
                     <div class="col-md-3 col-6 mb-2">
                         <div class="p-3 rounded bg-light">
                             <div class="text-muted small">Highest</div>
-                            <div class="fs-2 fw-bold text-success">{stats['highest']}%</div>
+                            <div class="fs-2 fw-bold text-success">{fmt_stat(stats['highest'])}</div>
                         </div>
                     </div>
                     <div class="col-md-3 col-6 mb-2">
                         <div class="p-3 rounded bg-light">
                             <div class="text-muted small">Lowest</div>
-                            <div class="fs-2 fw-bold text-danger">{stats['lowest']}%</div>
+                            <div class="fs-2 fw-bold text-danger">{fmt_stat(stats['lowest'])}</div>
                         </div>
                     </div>
                 </div>
@@ -167,21 +175,19 @@ def get_student_dashboard(student_id: str):
         </div>
         """
     else:
-        stats_html = "" # No stats to show yet
+        stats_html = ""
 
     # =========================================================
-    # 2. Build Available Exams List HTML
+    # 2. Available Exams List (Filtered by Eligibility)
     # =========================================================
     exam_list_html = ""
     eligible_exams = []
-    
+
     for exam in published_exams:
         e_id = exam.get("exam_id")
-        
-        # CHECK ELIGIBILITY
         if is_student_eligible(current_student_id, e_id):
             eligible_exams.append(exam)
-    
+
     if not eligible_exams:
         exam_list_html = """
         <div class="alert alert-info">
@@ -218,7 +224,7 @@ def get_student_dashboard(student_id: str):
             """
 
     # =========================================================
-    # 3. Build Submissions List HTML
+    # 3. Submissions List HTML (Updated Logic)
     # =========================================================
     submissions = get_student_submissions(current_student_id)
     submissions_html = ""
@@ -234,46 +240,45 @@ def get_student_dashboard(student_id: str):
             exam_title = html.escape(sub.get("exam_title", "Unknown Exam"))
             exam_date = sub.get("exam_date", "N/A")
             submitted_at = sub.get("submitted_at")
+            exam_id = sub.get("exam_id")
 
             if isinstance(submitted_at, datetime):
                 submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M")
             else:
                 submitted_time = "N/A"
 
-            exam_id = sub.get("exam_id")
-            results_released = sub.get("results_released", False)
-            release_date = sub.get("release_date")
-            release_time = sub.get("release_time", "00:00")
+            # Retrieve Display Flags (Calculated in Service Layer)
+            show_score = sub.get("show_score", False)
+            is_actionable = sub.get("is_actionable", False)
+            status_label = sub.get("status_label", "Unknown")
+            action_label = sub.get("action_label", "View")
 
-            if results_released:
-                status_badge = '<span class="status-badge status-released">✅ Results Available</span>'
-                action_button = f"""
-                <a href="/student-result?exam_id={exam_id}&student_id={current_student_id}" 
-                   class="btn btn-success btn-sm">
-                    View Results
-                </a>
-                """
+            # Badge Logic
+            if show_score:
+                status_badge = f'<span class="status-badge status-released">✅ {html.escape(status_label)}</span>'
                 score_display = f"""
                 <div class="mt-2">
                     <strong>Score:</strong> {sub.get('overall_percentage', 0)}%
                 </div>
                 """
             else:
-                status_badge = '<span class="status-badge status-pending">⏳ Results Pending</span>'
-                if release_date:
-                    release_display = f"{release_date} at {release_time}"
-                    action_button = f"""
-                    <button class="btn btn-outline-secondary btn-sm" disabled>
-                        Results on {release_display}
-                    </button>
-                    """
-                else:
-                    action_button = """
-                    <button class="btn btn-outline-secondary btn-sm" disabled>
-                        Results Not Yet Scheduled
-                    </button>
-                    """
-                score_display = ""
+                status_badge = f'<span class="status-badge status-pending">⏳ {html.escape(status_label)}</span>'
+                score_display = ""  # Hide score
+
+            # Button Logic
+            if is_actionable:
+                action_button = f"""
+                <a href="/student-result?exam_id={exam_id}&student_id={current_student_id}" 
+                   class="btn btn-success btn-sm">
+                    {html.escape(action_label)}
+                </a>
+                """
+            else:
+                action_button = f"""
+                <button class="btn btn-outline-secondary btn-sm" disabled>
+                    {html.escape(action_label)}
+                </button>
+                """
 
             submissions_html += f"""
             <div class="submission-card">
@@ -297,7 +302,7 @@ def get_student_dashboard(student_id: str):
             """
 
     # =========================================================
-    # 4. Render Template
+    # 4. Render
     # =========================================================
     html_str = render(
         "student_dashboard.html",
@@ -305,7 +310,7 @@ def get_student_dashboard(student_id: str):
             "student_id": current_student_id,
             "exam_list_html": exam_list_html,
             "submissions_html": submissions_html,
-            "stats_html": stats_html,  # <--- PASS THE STATS HTML HERE
+            "stats_html": stats_html,
         },
     )
     return html_str, 200
@@ -314,7 +319,6 @@ def get_student_dashboard(student_id: str):
 def get_student_exam(exam_id: str, student_id: str):
     """
     GET handler for student exam page
-    Shows exam based on timing, access rules, AND ELIGIBILITY
     """
     if not exam_id or not student_id:
         error_html = render(
@@ -340,7 +344,7 @@ def get_student_exam(exam_id: str, student_id: str):
         error_html = render(
             "error.html",
             {
-                "message": "You are not eligible to take this exam. This exam is restricted to specific student groups.",
+                "message": "You are not eligible to take this exam.",
                 "back_url": f"/student-dashboard?student_id={student_id}",
             },
         )
@@ -360,10 +364,8 @@ def get_student_exam(exam_id: str, student_id: str):
         exam_status = access_info["status"]
         submission_time = ""
 
-    # Calculate server time offset for client
     server_time = get_server_time()
 
-    # Prepare context
     context = {
         "exam_id": exam_id,
         "student_id": student_id,
@@ -379,7 +381,6 @@ def get_student_exam(exam_id: str, student_id: str):
         "questions_html": "",
     }
 
-    # Add timing info if available
     if "exam_start" in access_info:
         context["exam_start_time"] = access_info["exam_start"].strftime(
             "%Y-%m-%d %H:%M:%S"
@@ -396,7 +397,6 @@ def get_student_exam(exam_id: str, student_id: str):
         context["exam_end_time"] = "N/A"
         context["exam_end_iso"] = ""
 
-    # Load questions if exam is active
     if exam_status == "active":
         context["questions_html"] = _build_questions_html(exam_id)
 
@@ -419,11 +419,9 @@ def post_submit_student_exam(body: str):
     student_id = get_field("student_id")
     answers_json = get_field("answers")
 
-    # Validate
     if not exam_id or not student_id:
         return "<h1>Error: Missing required fields</h1>", 400
 
-    # Check eligibility
     if not is_student_eligible(student_id, exam_id):
         error_html = render(
             "error.html",
@@ -434,7 +432,6 @@ def post_submit_student_exam(body: str):
         )
         return error_html, 403
 
-    # Check if already submitted
     submission_info = check_student_submission_status(exam_id, student_id)
 
     if submission_info["has_submitted"]:
@@ -447,13 +444,11 @@ def post_submit_student_exam(body: str):
         )
         return error_html, 400
 
-    # Parse answers
     try:
         answers = json.loads(answers_json) if answers_json else {}
     except json.JSONDecodeError:
         answers = {}
 
-    # Save submission
     submission_data = {
         "exam_id": exam_id,
         "student_id": student_id,
@@ -467,7 +462,6 @@ def post_submit_student_exam(body: str):
     doc_ref.set(submission_data)
     submission_id = doc_ref.id
 
-    # AUTO-GRADE MCQ QUESTIONS
     grading_result = grade_mcq_submission(exam_id, student_id, answers)
     save_grading_result(submission_id, grading_result)
 
@@ -518,12 +512,10 @@ def api_auto_submit_exam(body: str):
         if not exam_id or not student_id:
             return json.dumps({"error": "Missing required fields"}), 400
 
-        # Check if already submitted
         submission_info = check_student_submission_status(exam_id, student_id)
         if submission_info["has_submitted"]:
             return json.dumps({"error": "Already submitted"}), 400
 
-        # Auto-submit
         submission_id = auto_submit_exam(exam_id, student_id, answers)
 
         return json.dumps({"success": True, "submission_id": submission_id}), 200
@@ -545,7 +537,6 @@ def api_save_draft(body: str):
         if not exam_id or not student_id:
             return json.dumps({"error": "Missing required fields"}), 400
 
-        # Save draft
         draft_data = {
             "exam_id": exam_id,
             "student_id": student_id,
@@ -554,7 +545,6 @@ def api_save_draft(body: str):
             "is_draft": True,
         }
 
-        # Use student_id + exam_id as document ID to overwrite
         doc_id = f"{student_id}_{exam_id}_draft"
         db.collection("drafts").document(doc_id).set(draft_data)
 
@@ -580,7 +570,6 @@ def get_exam_result(exam_id: str, student_id: str):
         )
         return error_html, 400
 
-    # Get exam details
     exam = get_exam_by_id(exam_id)
     if not exam:
         error_html = render(
@@ -589,7 +578,6 @@ def get_exam_result(exam_id: str, student_id: str):
         )
         return error_html, 404
 
-    # Get submission
     submission = get_student_submission(exam_id, student_id)
     if not submission:
         error_html = render(
@@ -601,7 +589,6 @@ def get_exam_result(exam_id: str, student_id: str):
         )
         return error_html, 404
 
-    # Get grading result
     grading_result = submission.get("grading_result", {})
 
     if not grading_result:
@@ -614,7 +601,6 @@ def get_exam_result(exam_id: str, student_id: str):
         )
         return error_html, 404
 
-    # Build question review HTML
     questions_review_html = ""
     for q_result in grading_result.get("question_results", []):
         is_correct = q_result.get("is_correct")
@@ -650,7 +636,6 @@ def get_exam_result(exam_id: str, student_id: str):
         </div>
         """
 
-    # Add short answer results if available
     sa_grades = submission.get("short_answer_graded_questions", [])
     if sa_grades:
         questions_review_html += (
@@ -691,4 +676,3 @@ def get_exam_result(exam_id: str, student_id: str):
 
     html_str = render("exam_result.html", context)
     return html_str, 200
-

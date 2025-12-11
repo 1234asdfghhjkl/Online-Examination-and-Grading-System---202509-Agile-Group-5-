@@ -315,7 +315,6 @@
             </div>
 
             <div class="card-body">
-                <!-- Progress Stepper -->
                 <div class="stepper">
                     <div class="stepper-item">
                         <div class="step-circle current">1</div>
@@ -334,14 +333,12 @@
                     </div>
                 </div>
 
-                <!-- Error Messages -->
                 {{errors_html}}
 
-                <!-- Main Form -->
                 <form action="/submit-exam" method="POST" id="exam-form">
                     <input type="hidden" name="exam_id" value="{{exam_id}}">
+                    <input type="hidden" name="lecturer_id" value="{{lecturer_id}}">
 
-                    <!-- Basic Information -->
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Exam Title *</label>
@@ -390,7 +387,6 @@
                         </div>
                     </div>
 
-                    <!-- Dynamic Student Filters -->
                     <div class="filter-section">
                         <div class="filter-section-header">
                             <h6>👥 Student Filters (Optional)</h6>
@@ -407,7 +403,6 @@
 
                         <div id="filter-content" style="display: none;">
                             <div class="row g-3">
-                                <!-- Major Filter -->
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">🎓 Major (Select First)</label>
                                     <div class="filter-container" id="major-filter-container">
@@ -418,7 +413,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Year Filter -->
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">📚 Year</label>
                                     <div class="filter-container" id="year-filter-container">
@@ -428,7 +422,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Semester Filter -->
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold">📅 Semester</label>
                                     <div class="filter-container" id="semester-filter-container">
@@ -439,7 +432,6 @@
                                 </div>
                             </div>
 
-                            <!-- Filter Summary -->
                             <div class="filter-summary all-students" id="filter-summary-box">
                                 <div class="filter-summary-text">
                                     <strong>📋 Current Selection:</strong>
@@ -450,7 +442,6 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
                     <div class="d-flex justify-content-end mt-4">
                         <button type="submit" class="btn btn-primary">
                             Next Step →

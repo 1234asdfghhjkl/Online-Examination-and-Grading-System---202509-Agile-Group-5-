@@ -29,7 +29,7 @@ def get_performance_report(exam_id: str):
 
     # Get the performance report
     report = get_exam_performance_report(exam_id)
-    
+
     if not report:
         error_html = f"""
         <div class="container mt-5">
@@ -49,7 +49,7 @@ def get_performance_report(exam_id: str):
         exam = report.get("exam", {})
         exam_title = exam.get("title", "Exam") if exam else "Exam"
         exam_date = exam.get("exam_date", "N/A") if exam else "N/A"
-        
+
         no_data_html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -130,7 +130,7 @@ def get_performance_report(exam_id: str):
     grade_labels = []
     grade_counts = []
     grade_colors = []
-    
+
     grade_color_map = {
         "A": "#28a745",  # Green
         "B": "#17a2b8",  # Cyan
@@ -138,36 +138,36 @@ def get_performance_report(exam_id: str):
         "D": "#fd7e14",  # Orange
         "F": "#dc3545",  # Red
     }
-    
+
     # Check if grade_distribution has data
     print(f"🔍 DEBUG - grade_distribution: {grade_distribution}")
-    
+
     # FIXED: Always include all grades A-F, even if count is 0
     for grade in ["A", "B", "C", "D", "F"]:
         grade_labels.append(f"Grade {grade}")
         grade_colors.append(grade_color_map.get(grade, "#6c757d"))
-        
+
         # Get count from distribution, default to 0 if not present
         if grade in grade_distribution:
             count = grade_distribution[grade].get("count", 0)
             grade_counts.append(count)
         else:
             grade_counts.append(0)
-    
+
     print(f"📊 Chart Data - Grade labels: {grade_labels}")
     print(f"📊 Chart Data - Grade counts: {grade_counts}")
 
     # Build question performance data for chart
     question_labels = []
     question_success = []
-    
+
     print(f"🔍 DEBUG - question_performance: {question_performance}")
-    
+
     for q_key in sorted(question_performance.keys()):
         q_data = question_performance[q_key]
         question_labels.append(q_key)
         question_success.append(q_data.get("success_rate", 0))
-    
+
     print(f"🎯 Chart Data - Question labels: {question_labels}")
     print(f"🎯 Chart Data - Question success: {question_success}")
 
@@ -177,7 +177,7 @@ def get_performance_report(exam_id: str):
     grade_colors_json = json.dumps(grade_colors)
     question_labels_json = json.dumps(question_labels) if question_labels else "[]"
     question_success_json = json.dumps(question_success) if question_success else "[]"
-    
+
     print(f"✅ Final JSON - grade_labels_json: {grade_labels_json}")
     print(f"✅ Final JSON - grade_counts_json: {grade_counts_json}")
     print(f"✅ Final JSON - question_labels_json: {question_labels_json}")
@@ -202,11 +202,11 @@ def get_performance_report(exam_id: str):
                 </thead>
                 <tbody>
         """
-        
+
         for q_key in sorted(question_performance.keys()):
             q_data = question_performance[q_key]
             success_rate = q_data.get("success_rate", 0)
-            
+
             # Color code success rate
             if success_rate >= 80:
                 badge_class = "bg-success"
@@ -216,7 +216,7 @@ def get_performance_report(exam_id: str):
                 badge_class = "bg-warning text-dark"
             else:
                 badge_class = "bg-danger"
-            
+
             question_perf_html += f"""
                 <tr>
                     <td><strong>{html.escape(q_key)}</strong></td>
@@ -227,7 +227,7 @@ def get_performance_report(exam_id: str):
                     <td><span class="badge {badge_class}">{success_rate}%</span></td>
                 </tr>
             """
-        
+
         question_perf_html += """
                 </tbody>
             </table>
@@ -249,7 +249,7 @@ def get_performance_report(exam_id: str):
                 medal = "🥈"
             elif rank == 3:
                 medal = "🥉"
-            
+
             top_performers_html += f"""
             <tr>
                 <td>{medal} {rank}</td>
@@ -269,7 +269,7 @@ def get_performance_report(exam_id: str):
     at_risk_html = ""
     if students_at_risk:
         for student in students_at_risk:
-            concerns = ", ".join(student.get('areas_of_concern', []))
+            concerns = ", ".join(student.get("areas_of_concern", []))
             at_risk_html += f"""
             <tr>
                 <td>{html.escape(student.get('student_id', 'N/A'))}</td>
@@ -295,7 +295,6 @@ def get_performance_report(exam_id: str):
         "exam_title": exam.get("title", ""),
         "exam_date": exam.get("exam_date", ""),
         "total_students": report.get("total_students", 0),
-        
         # Overall stats
         "avg_percentage": overall_stats.get("average_percentage", 0),
         "pass_rate": overall_stats.get("pass_rate", 0),
@@ -305,24 +304,32 @@ def get_performance_report(exam_id: str):
         "std_dev": overall_stats.get("standard_deviation", 0),
         "passed_count": overall_stats.get("passed_count", 0),
         "failed_count": overall_stats.get("failed_count", 0),
-        
         # MCQ stats
         "mcq_avg_score": mcq_stats.get("average_score", 0),
         "mcq_avg_percentage": mcq_stats.get("average_percentage", 0),
         "mcq_total": mcq_stats.get("total_marks", 0),
-        
         # Short answer stats
-        "sa_avg_score": sa_stats.get("average_score", 0) if sa_stats.get("has_short_answers") else "N/A",
-        "sa_avg_percentage": sa_stats.get("average_percentage", 0) if sa_stats.get("has_short_answers") else "N/A",
-        "sa_total": sa_stats.get("total_marks", 0) if sa_stats.get("has_short_answers") else "N/A",
-        
+        "sa_avg_score": (
+            sa_stats.get("average_score", 0)
+            if sa_stats.get("has_short_answers")
+            else "N/A"
+        ),
+        "sa_avg_percentage": (
+            sa_stats.get("average_percentage", 0)
+            if sa_stats.get("has_short_answers")
+            else "N/A"
+        ),
+        "sa_total": (
+            sa_stats.get("total_marks", 0)
+            if sa_stats.get("has_short_answers")
+            else "N/A"
+        ),
         # Chart data (as JSON strings for JavaScript)
         "grade_labels_json": grade_labels_json,
         "grade_counts_json": grade_counts_json,
         "grade_colors_json": grade_colors_json,
         "question_labels_json": question_labels_json,
         "question_success_json": question_success_json,
-        
         # HTML tables - NOW PROPERLY POPULATED
         "question_perf_html": question_perf_html,
         "top_performers_html": top_performers_html,

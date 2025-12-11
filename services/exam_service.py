@@ -30,6 +30,7 @@ def save_exam_draft(
     exam_date: str,
     start_time: str = "00:00",
     end_time: str = "01:00",
+    created_by: str = None,
 ) -> str:
     duration_int = int(duration)
 
@@ -44,6 +45,9 @@ def save_exam_draft(
         # REMOVED: "status": "draft" from here so it doesn't overwrite published status
         "updated_at": datetime.utcnow(),
     }
+
+    if created_by:
+        exam_data["created_by"] = created_by
 
     if exam_id:
         # Update existing draft/published exam
@@ -448,3 +452,34 @@ def calculate_grade_distribution(scores: List[float]) -> Dict:
             distribution["F"] += 1
 
     return distribution
+
+
+def get_exams_by_lecturer(lecturer_id: str) -> list:
+    """
+    Fetches exams created by a specific lecturer.
+    FIX: Removed database sorting to prevent 'Missing Index' errors.
+    """
+    if not lecturer_id:
+        print("⚠️ DEBUG: No lecturer_id provided to get_exams_by_lecturer")
+        return []
+
+    try:
+        print(f"🔍 DEBUG: Querying exams for lecturer_id='{lecturer_id}'...")
+
+        # FIX: Remove .order_by() from here to avoid index errors
+        query = db.collection("exams").where("created_by", "==", lecturer_id).stream()
+
+        exams = []
+        for doc in query:
+            data = doc.to_dict()
+            data["exam_id"] = doc.id
+            exams.append(data)
+
+        # Sort in Python instead (Safest way)
+        exams.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
+
+        print(f"✅ DEBUG: Found {len(exams)} exams for {lecturer_id}")
+        return exams
+    except Exception as e:
+        print(f"❌ ERROR fetching lecturer exams: {e}")
+        return []
