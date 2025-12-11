@@ -464,7 +464,6 @@ def post_grading_settings(body: str):
     POST handler to save grading deadline and result release settings
     Performs comprehensive validation
     """
-    
 
     form = _parse_grading_form(body)
     exam_id = form.get("exam_id")
@@ -924,9 +923,11 @@ def post_finalize_exam(body: str):
         """
         return error_html, 500
 
+
 # ============================================================
 # NEW: ACCOUNT IMPORT/CREATION ROUTES
 # ============================================================
+
 
 def get_account_import_page():
     """
@@ -935,46 +936,50 @@ def get_account_import_page():
     ctx = {
         "success_html": "",
         "errors_html": "",
-        "max_file_size": "2MB", # Display limit
+        "max_file_size": "2MB",  # Display limit
     }
     html_str = render("admin_account_import.html", ctx)
     return html_str, 200
 
 
 def post_import_accounts(
-    user_type: str, 
-    form_fields: dict[str, str], 
-    file_content: Optional[bytes], 
-    file_name: Optional[str]
+    user_type: str,
+    form_fields: dict[str, str],
+    file_content: Optional[bytes],
+    file_name: Optional[str],
 ):
     """
     POST handler to process uploaded Excel data for account creation.
-    
+
     Args:
         user_type: 'lecturer' or 'student'.
         form_fields: Dictionary of non-file form fields (parsed by server.py).
         file_content: Bytes of the uploaded file.
         file_name: The name of the uploaded file.
     """
-    
+
     ctx = {
         "success_html": "",
         "errors_html": "",
         "max_file_size": "2MB",
     }
-    
+
     # 1. Validation Check: Was a file actually provided?
     if not file_name or file_name.strip() == "":
-        ctx["errors_html"] = """
+        ctx[
+            "errors_html"
+        ] = """
         <div class="alert alert-danger">
             <strong>Upload Failed:</strong> Please select an Excel file for import.
         </div>
         """
         html_str = render("admin_account_import.html", ctx)
         return html_str, 400
-        
+
     if not file_content:
-        ctx["errors_html"] = """
+        ctx[
+            "errors_html"
+        ] = """
         <div class="alert alert-danger">
             <strong>Upload Failed:</strong> File content was empty or unreadable by the server.
         </div>
@@ -984,25 +989,31 @@ def post_import_accounts(
 
     # --- REAL CREATION LOGIC ---
     user_type_display = user_type.title()
-    
+
     try:
         # 2. Parse Excel data
         users_list = parse_excel_data(file_content, user_type)
-        
+
         # 3. Bulk create users in Firebase Auth & Firestore
         stats = bulk_create_users(users_list, user_type)
-        
+
         # 4. Success / Report
-        
+
         summary_items = []
-        if stats['created'] > 0:
-            summary_items.append(f"Successfully **Created** {stats['created']} new {user_type_display} accounts.")
-        
-        if stats['failed'] > 0:
-            summary_items.append(f"**Failed** to create {stats['failed']} {user_type_display} accounts due to Firebase errors.")
-            
+        if stats["created"] > 0:
+            summary_items.append(
+                f"Successfully **Created** {stats['created']} new {user_type_display} accounts."
+            )
+
+        if stats["failed"] > 0:
+            summary_items.append(
+                f"**Failed** to create {stats['failed']} {user_type_display} accounts due to Firebase errors."
+            )
+
             # Detailed error list
-            error_list_html = "".join(f"<li>{html.escape(e)}</li>" for e in stats['errors'])
+            error_list_html = "".join(
+                f"<li>{html.escape(e)}</li>" for e in stats["errors"]
+            )
             error_section = f"""
             <h6 class="mt-3">Detailed Errors:</h6>
             <ul class="mb-0 small text-danger">
@@ -1011,7 +1022,6 @@ def post_import_accounts(
             """
         else:
             error_section = ""
-
 
         success_html = f"""
         <div class="alert alert-success">
@@ -1029,10 +1039,12 @@ def post_import_accounts(
     except Exception as e:
         # Handle parsing errors or critical service errors
         error_message = f"Critical Import Error: {html.escape(str(e))}"
-        
+
         # Check if the error is a missing column/format issue
-        if "Missing required columns" in str(e) or "No valid user records found" in str(e):
-             error_message = f"File Format Error: {html.escape(str(e))}"
+        if "Missing required columns" in str(e) or "No valid user records found" in str(
+            e
+        ):
+            error_message = f"File Format Error: {html.escape(str(e))}"
 
         errors_html = f"""
         <div class="alert alert-danger">
@@ -1043,3 +1055,68 @@ def post_import_accounts(
         """
         ctx["errors_html"] = errors_html
         return render("admin_account_import.html", ctx), 400
+
+
+def get_admin_student_list():
+    """
+    GET handler for the Admin Student List page.
+    Fetches all users with role='student' from Firestore.
+    """
+    try:
+        # Fetch all students
+        # Note: In a real production app with thousands of users, you would use pagination (limit/offset).
+        # For this prototype, fetching all is acceptable.
+        students_ref = db.collection("users").where("role", "==", "student").stream()
+
+        students = []
+        for doc in students_ref:
+            s = doc.to_dict()
+            students.append(
+                {
+                    "student_id": s.get("student_id", "N/A"),
+                    "name": s.get("name", "N/A"),
+                    "email": s.get("email", "N/A"),
+                    "major": s.get("major", "N/A"),
+                    "year": s.get("year", "-"),
+                    "semester": s.get("semester", "-"),
+                    "ic": s.get("ic", "N/A"),
+                }
+            )
+
+        # Sort by Student ID
+        students.sort(key=lambda x: x["student_id"])
+
+        # Generate HTML rows
+        rows_html = ""
+        if not students:
+            rows_html = '<tr><td colspan="6" class="text-center text-muted">No students found. Import accounts to get started.</td></tr>'
+        else:
+            for s in students:
+                rows_html += f"""
+                <tr>
+                    <td><span class="fw-bold">{html.escape(str(s['student_id']))}</span></td>
+                    <td>{html.escape(str(s['name']))}</td>
+                    <td>{html.escape(str(s['email']))}</td>
+                    <td>{html.escape(str(s['major']))}</td>
+                    <td>Y{s['year']} S{s['semester']}</td>
+                    <td>
+                        <a href="/profile?user_id={s['student_id']}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                """
+
+        ctx = {"student_rows_html": rows_html, "total_count": len(students)}
+        return render("admin_student_list.html", ctx), 200
+
+    except Exception as e:
+        # Fallback error page
+        error_html = f"""
+        <div class="container mt-5">
+            <div class="alert alert-danger">
+                <h4>Error Fetching Students</h4>
+                <p>{str(e)}</p>
+                <a href="/admin/exam-list" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+        """
+        return error_html, 500
