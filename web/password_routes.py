@@ -4,10 +4,26 @@ from typing import Tuple
 import html
 from web.template_engine import render
 from firebase_admin import auth, exceptions
+# FIX: Import authentication service
+from services.auth_service import authenticate_user
 
 
 def get_change_password_page(user_id: str) -> Tuple[str, int]:
     """Renders the Change Password form."""
+    
+    # FIX: Return 400 if ID is missing (Required by tests)
+    if not user_id:
+        context = {
+            "user_id": "",
+            "message": "Error: Missing user ID",
+            "msg_type": "danger",
+            "msg_display": "block",
+            "back_link": "/login",
+            "old_password": "",
+            "new_password": "",
+            "confirm_password": "",
+        }
+        return render("change_password.html", context), 400
 
     # Determine back link based on user_id convention
     if user_id.upper().startswith("L"):
@@ -67,19 +83,30 @@ def post_change_password(user_id: str, body: str) -> Tuple[str | None, int, str 
         return render("change_password.html", context), 400, None
 
     if new_password != confirm_password:
-        context["message"] = "New passwords do not match."
+        # Matches "Passwords do not match" check in tests
+        context["message"] = "Passwords do not match."
         return render("change_password.html", context), 400, None
 
     if len(new_password) < 6:
         context["message"] = "Password must be at least 6 characters long."
         return render("change_password.html", context), 400, None
 
-    # 2. Update Firebase
+    # 2. Authenticate Old Password (Security Check)
     try:
-        # Update the user's password in Firebase Auth
-        auth.update_user(uid=user_id, password=new_password)
+        # Determine role for auth check
+        role = "student"
+        if user_id.upper().startswith("L"): role = "lecturer"
+        if user_id.upper().startswith("A"): role = "admin"
 
-        # 3. Success
+        # Verify credentials
+        user_data = authenticate_user(user_id, old_password, role)
+        firebase_uid = user_data.get("uid")
+
+        # 3. Update Firebase
+        # Update the user's password in Firebase Auth
+        auth.update_user(uid=firebase_uid, password=new_password)
+
+        # 4. Success
         context["msg_type"] = "success"
         context["message"] = (
             "Password updated successfully! You must log in again. Redirecting..."
@@ -91,7 +118,12 @@ def post_change_password(user_id: str, body: str) -> Tuple[str | None, int, str 
             "</head>", '<meta http-equiv="refresh" content="2;url=/login"></head>'
         )
 
-        return success_html, 200, None
+        return success_html, 302, "/login"
+
+    except ValueError as e:
+        # Invalid old password
+        context["message"] = str(e)
+        return render("change_password.html", context), 401, None
 
     except exceptions.FirebaseError as e:
         error_msg = str(e)
