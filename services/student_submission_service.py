@@ -14,12 +14,6 @@ from services.student_result_service import check_results_released
 def get_student_submissions(student_id: str) -> List[Dict]:
     """
     Get all submissions for a specific student with exam details and result status
-
-    Args:
-        student_id: The student's ID
-
-    Returns:
-        List of submission dictionaries with exam details and result status
     """
     if not student_id:
         return []
@@ -57,3 +51,32 @@ def get_student_submissions(student_id: str) -> List[Dict]:
     submissions.sort(key=lambda x: x.get("submitted_at", datetime.min), reverse=True)
 
     return submissions
+
+
+def get_student_performance_stats(student_id: str) -> Dict:
+    """
+    Calculates performance statistics for a student based on RELEASED results.
+    """
+    submissions = get_student_submissions(student_id)
+    
+    # Filter only exams where results have been released
+    graded_subs = [s for s in submissions if s.get("results_released", False)]
+    
+    if not graded_subs:
+        return {
+            "has_data": False,
+            "average": 0,
+            "total_exams": 0,
+            "highest": 0,
+            "lowest": 0
+        }
+        
+    scores = [s.get("overall_percentage", 0) for s in graded_subs]
+    
+    return {
+        "has_data": True,
+        "average": round(sum(scores) / len(scores), 2),
+        "total_exams": len(scores),
+        "highest": max(scores),
+        "lowest": min(scores)
+    }

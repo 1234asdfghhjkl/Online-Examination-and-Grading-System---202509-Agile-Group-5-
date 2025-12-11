@@ -21,6 +21,7 @@ from services.exam_timing import (
     get_server_time,
 )
 from services.student_filter_service import is_student_eligible
+from services.student_submission_service import get_student_submissions, get_student_performance_stats
 from core.firebase_db import db
 
 
@@ -117,8 +118,8 @@ def _build_questions_html(exam_id: str) -> str:
 def get_student_dashboard(student_id: str):
     """
     Renders the student dashboard with filtered exams
+    Renders the student dashboard with a list of available exams, submissions, and performance stats.
     """
-    from services.student_submission_service import get_student_submissions
 
     published_exams = get_all_published_exams()
 
@@ -126,6 +127,51 @@ def get_student_dashboard(student_id: str):
     current_student_id = student_id if student_id else "test_student_01"
 
     # Build available exams HTML - FILTER BY ELIGIBILITY
+    # =========================================================
+    # 1. NEW: Get Performance Stats & Generate HTML
+    # =========================================================
+    stats = get_student_performance_stats(current_student_id)
+    
+    if stats['has_data']:
+        stats_html = f"""
+        <div class="card bg-white border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="card-title fw-bold text-primary mb-3">📊 Performance Report</h5>
+                <div class="row text-center">
+                    <div class="col-md-3 col-6 mb-2">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Average Score</div>
+                            <div class="fs-2 fw-bold text-primary">{stats['average']}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Exams Taken</div>
+                            <div class="fs-2 fw-bold text-dark">{stats['total_exams']}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Highest</div>
+                            <div class="fs-2 fw-bold text-success">{stats['highest']}%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-2">
+                        <div class="p-3 rounded bg-light">
+                            <div class="text-muted small">Lowest</div>
+                            <div class="fs-2 fw-bold text-danger">{stats['lowest']}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    else:
+        stats_html = "" # No stats to show yet
+
+    # =========================================================
+    # 2. Build Available Exams List HTML
+    # =========================================================
     exam_list_html = ""
     eligible_exams = []
     
@@ -171,7 +217,9 @@ def get_student_dashboard(student_id: str):
             </div>
             """
 
-    # Build submissions HTML
+    # =========================================================
+    # 3. Build Submissions List HTML
+    # =========================================================
     submissions = get_student_submissions(current_student_id)
     submissions_html = ""
 
@@ -248,12 +296,16 @@ def get_student_dashboard(student_id: str):
             </div>
             """
 
+    # =========================================================
+    # 4. Render Template
+    # =========================================================
     html_str = render(
         "student_dashboard.html",
         {
             "student_id": current_student_id,
             "exam_list_html": exam_list_html,
             "submissions_html": submissions_html,
+            "stats_html": stats_html,  # <--- PASS THE STATS HTML HERE
         },
     )
     return html_str, 200
@@ -639,3 +691,4 @@ def get_exam_result(exam_id: str, student_id: str):
 
     html_str = render("exam_result.html", context)
     return html_str, 200
+
