@@ -1,99 +1,419 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Exam</title>
-    <link rel="stylesheet" href="/static/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .container-main {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .header-bar h3 {
+            margin: 0;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .btn-back {
+            background: white;
+            border: 2px solid #e5e7eb;
+            color: #6b7280;
+            padding: 0.625rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-back:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateX(-4px);
+        }
+
+        .card-main {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control,
+        .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 0.875rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .filter-section-header {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 1rem 1.5rem;
+            margin: -1.5rem -1.5rem 1.5rem;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .filter-section-header h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .filter-section-header small {
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+
+        .filter-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .filter-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .filter-container::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .filter-container::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .filter-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .form-check {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .form-check:hover {
+            background: #f9fafb;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-check-input:disabled~.form-check-label {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .filter-summary {
+            background: white;
+            border: 2px solid #d1fae5;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .filter-summary.all-students {
+            border-color: #dbeafe;
+            background: #eff6ff;
+        }
+
+        .filter-summary.filtered {
+            border-color: #d1fae5;
+            background: #ecfdf5;
+        }
+
+        .filter-summary-text {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .student-count {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .filter-placeholder {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #9ca3af;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+        }
+
+        small.text-muted {
+            font-size: 0.85rem;
+        }
+    </style>
 </head>
 
-<body class="bg-light">
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="mb-0">Edit Exam</h3>
-            <a href="/exam-list" class="btn btn-outline-secondary btn-sm">
-                ← Back to exam list
+<body>
+
+    <div class="container-main">
+        <div class="header-bar">
+            <h3>✏️ Edit Exam</h3>
+            <a href="/exam-list" class="btn-back">
+                ← Back to Exam List
             </a>
         </div>
 
         {{errors_html}}
         {{success_html}}
 
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card-main">
             <div class="card-body">
-                <form action="/exam-edit?exam_id={{exam_id}}" method="POST">
+                <form action="/exam-edit?exam_id={{exam_id}}" method="POST" id="exam-form">
                     <input type="hidden" name="exam_id" value="{{exam_id}}">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Exam Date</label>
-                        <input type="date" name="exam_date" class="form-control" value="{{exam_date}}" required>
-                    </div>
+
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label class="form-label fw-semibold">Exam Title</label>
+                            <label class="form-label">Exam Title *</label>
                             <input type="text" name="title" class="form-control" value="{{title}}" required>
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Start Time</label>
+                            <label class="form-label">Exam Date *</label>
+                            <input type="date" name="exam_date" class="form-control" value="{{exam_date}}" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Start Time *</label>
                             <input type="time" name="start_time" id="start_time" class="form-control"
                                 value="{{start_time}}" required>
+                            <small class="text-muted">24-hour format</small>
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">End Time</label>
+                            <label class="form-label">End Time *</label>
                             <input type="time" name="end_time" id="end_time" class="form-control" value="{{end_time}}"
                                 required>
+                            <small class="text-muted">Auto-calculated</small>
                         </div>
+
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Duration (minutes)</label>
+                            <label class="form-label">Duration (minutes) *</label>
                             <input type="number" name="duration" id="duration" min="1" class="form-control"
                                 value="{{duration}}" required>
+                            <small class="text-muted">Auto-calculated</small>
                         </div>
+
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Description</label>
-                            <textarea name="description" rows="2" class="form-control">{{description}}</textarea>
+                            <label class="form-label">Description *</label>
+                            <textarea name="description" rows="3" class="form-control"
+                                required>{{description}}</textarea>
                         </div>
+
                         <div class="col-12">
-                            <label class="form-label fw-semibold">Instructions for Students</label>
-                            <textarea name="instructions" rows="3" class="form-control">{{instructions}}</textarea>
+                            <label class="form-label">Instructions for Students *</label>
+                            <textarea name="instructions" rows="4" class="form-control"
+                                required>{{instructions}}</textarea>
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-3">
-                        <button type="submit" class="btn btn-primary btn-rounded">
-                            Save changes
+                    <div class="filter-section">
+                        <div class="filter-section-header">
+                            <h6>👥 Student Filters (Optional)</h6>
+                            <small>Select specific majors, years, and semesters - or leave empty for all
+                                students</small>
+                        </div>
+
+                        <div id="filter-loading" style="display: block;">
+                            <div class="text-center py-4">
+                                <div class="loading-spinner"></div>
+                                <p class="mt-3 text-muted">Loading student data...</p>
+                            </div>
+                        </div>
+
+                        <div id="filter-content" style="display: none;">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">🎓 Major (Select First)</label>
+                                    <div class="filter-container" id="major-filter-container">
+                                        <div class="filter-placeholder">
+                                            <p class="mb-0">Loading majors...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">📚 Year</label>
+                                    <div class="filter-container" id="year-filter-container">
+                                        <div class="filter-placeholder">
+                                            <p class="mb-0 small">Select a major first</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">📅 Semester</label>
+                                    <div class="filter-container" id="semester-filter-container">
+                                        <div class="filter-placeholder">
+                                            <p class="mb-0 small">Select major and year first</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="filter-summary all-students" id="filter-summary-box">
+                                <div class="filter-summary-text">
+                                    <strong>📋 Current Selection:</strong>
+                                    <span id="filter-summary">All Students</span>
+                                </div>
+                                <div class="student-count" id="student-count"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            💾 Save Changes
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
     <script>
+        // Time Calculation Logic
         (function () {
             const startTimeInput = document.getElementById('start_time');
             const endTimeInput = document.getElementById('end_time');
             const durationInput = document.getElementById('duration');
 
-            // Ensure inputs have IDs for the script to find them (Title is missing ID but is fine)
-            startTimeInput.id = 'start_time';
-            endTimeInput.id = 'end_time';
-            durationInput.id = 'duration';
-
-
-            // Helper: Convert time string (HH:MM) to minutes from midnight
             function timeToMinutes(timeStr) {
                 if (!timeStr) return null;
                 const [hours, minutes] = timeStr.split(':').map(Number);
                 return hours * 60 + minutes;
             }
 
-            // Helper: Convert minutes from midnight to time string (HH:MM)
             function minutesToTime(minutes) {
                 const hours = Math.floor(minutes / 60) % 24;
                 const mins = minutes % 60;
                 return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
             }
 
-            // Calculate End Time from Start Time + Duration
             function calculateEndTime() {
                 const startTime = startTimeInput.value;
                 const duration = parseInt(durationInput.value);
@@ -105,7 +425,6 @@
                 }
             }
 
-            // Calculate Duration from Start Time and End Time
             function calculateDuration() {
                 const startTime = startTimeInput.value;
                 const endTime = endTimeInput.value;
@@ -114,9 +433,8 @@
                     const startMinutes = timeToMinutes(startTime);
                     let endMinutes = timeToMinutes(endTime);
 
-                    // Handle cases where end time is on the next day (e.g., 23:00 to 01:00)
                     if (endMinutes <= startMinutes) {
-                        endMinutes += 24 * 60; // Add 24 hours
+                        endMinutes += 24 * 60;
                     }
 
                     const duration = endMinutes - startMinutes;
@@ -126,18 +444,323 @@
                 }
             }
 
-            // Event listeners
             startTimeInput.addEventListener('change', calculateEndTime);
             durationInput.addEventListener('input', calculateEndTime);
             endTimeInput.addEventListener('change', calculateDuration);
 
-            // Initial calculation on page load if values exist
             if (startTimeInput.value && durationInput.value) {
-                // Calculate End Time on load, as Duration is the source of truth when loading existing data
                 calculateEndTime();
             }
         })();
+
+        // Dynamic Filter System with Improved Restoration
+        (function () {
+            let studentData = {};
+            let allMajors = [];
+            let selectedMajors = new Set();
+            let selectedYears = new Set();
+            let selectedSemesters = new Set();
+            let preSelectedFilters = null;
+
+            // Parse exam ID from form
+            const examId = document.querySelector('input[name="exam_id"]').value;
+
+            async function loadFilterData() {
+                const loadingEl = document.getElementById('filter-loading');
+                const contentEl = document.getElementById('filter-content');
+
+                loadingEl.style.display = 'block';
+                contentEl.style.display = 'none';
+
+                try {
+                    // Fetch filter options WITH exam_id to get current filters
+                    const response = await fetch(`/api/get-filter-options?exam_id=${examId}`);
+                    const data = await response.json();
+
+                    studentData = data.combinations || {};
+                    allMajors = data.majors || [];
+                    preSelectedFilters = data.current_filters || { years: [], majors: [], semesters: [] };
+
+                    console.log('✅ Loaded API data:', data);
+                    console.log('✅ Pre-selected filters:', preSelectedFilters);
+
+                    // Populate UI
+                    populateMajors(allMajors);
+                    restoreSelections();
+
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'block';
+
+                } catch (error) {
+                    console.error('❌ Failed to load filter options:', error);
+
+                    // Fallback
+                    allMajors = ['Computer Science', 'Mechanical Engineering', 'Business Administration'];
+                    preSelectedFilters = { years: [], majors: [], semesters: [] };
+                    
+                    populateMajors(allMajors);
+                    restoreSelections();
+
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'block';
+                }
+            }
+
+            function populateMajors(majors) {
+                const container = document.getElementById('major-filter-container');
+                container.innerHTML = '';
+
+                if (majors.length === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small text-danger">No majors found</p></div>';
+                    return;
+                }
+
+                majors.forEach(major => {
+                    const safeId = major.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+                    const isPreSelected = preSelectedFilters.majors.includes(major);
+
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = `
+                <input class="form-check-input major-checkbox" 
+                       type="checkbox" 
+                       name="filter_major" 
+                       value="${major}" 
+                       id="major_${safeId}"
+                       ${isPreSelected ? 'checked' : ''}>
+                <label class="form-check-label" for="major_${safeId}">
+                    ${major}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.major-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleMajorChange);
+                });
+            }
+
+            function restoreSelections() {
+                // Clear existing selections
+                selectedMajors.clear();
+                selectedYears.clear();
+                selectedSemesters.clear();
+
+                // Restore majors from checkboxes
+                document.querySelectorAll('.major-checkbox:checked').forEach(cb => {
+                    selectedMajors.add(cb.value);
+                });
+
+                console.log('✅ Restored majors:', Array.from(selectedMajors));
+
+                // Restore years and semesters
+                if (selectedMajors.size > 0) {
+                    updateYearOptions(preSelectedFilters.years);
+                    // Give time for years to render, then restore semesters
+                    setTimeout(() => {
+                        updateSemesterOptions(preSelectedFilters.semesters);
+                        updateSummary();
+                    }, 100);
+                } else {
+                    updateSummary();
+                }
+            }
+
+            function handleMajorChange(e) {
+                const major = e.target.value;
+
+                if (e.target.checked) {
+                    selectedMajors.add(major);
+                } else {
+                    selectedMajors.delete(major);
+                }
+
+                updateYearOptions();
+                updateSummary();
+            }
+
+            function updateYearOptions(yearsToRestore = []) {
+                const container = document.getElementById('year-filter-container');
+
+                if (selectedMajors.size === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small">Select a major first</p></div>';
+                    selectedYears.clear();
+                    updateSemesterOptions();
+                    return;
+                }
+
+                const availableYears = new Set();
+
+                Object.entries(studentData).forEach(([key, info]) => {
+                    if (selectedMajors.has(info.major)) {
+                        availableYears.add(String(info.year));
+                    }
+                });
+
+                container.innerHTML = '';
+
+                ['1', '2', '3', '4'].forEach(year => {
+                    const isAvailable = availableYears.has(year);
+                    const shouldRestore = yearsToRestore.map(String).includes(year);
+                    const isChecked = shouldRestore && isAvailable;
+
+                    if (isChecked) {
+                        selectedYears.add(year);
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = `
+                <input class="form-check-input year-checkbox" 
+                       type="checkbox" 
+                       name="filter_year" 
+                       value="${year}" 
+                       id="year${year}"
+                       ${isAvailable ? '' : 'disabled'}
+                       ${isChecked ? 'checked' : ''}>
+                <label class="form-check-label" for="year${year}">
+                    Year ${year} ${isAvailable ? '' : '(No students)'}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.year-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleYearChange);
+                });
+
+                if (yearsToRestore.length === 0) {
+                    updateSemesterOptions();
+                }
+            }
+
+            function handleYearChange(e) {
+                const year = e.target.value;
+
+                if (e.target.checked) {
+                    selectedYears.add(year);
+                } else {
+                    selectedYears.delete(year);
+                }
+
+                updateSemesterOptions();
+                updateSummary();
+            }
+
+            function updateSemesterOptions(semestersToRestore = []) {
+                const container = document.getElementById('semester-filter-container');
+
+                if (selectedMajors.size === 0 || selectedYears.size === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small">Select major and year first</p></div>';
+                    selectedSemesters.clear();
+                    updateSummary();
+                    return;
+                }
+
+                const availableSemesters = new Set();
+
+                Object.entries(studentData).forEach(([key, info]) => {
+                    if (selectedMajors.has(info.major) && selectedYears.has(String(info.year))) {
+                        info.semesters.forEach(sem => availableSemesters.add(String(sem)));
+                    }
+                });
+
+                container.innerHTML = '';
+
+                ['1', '2'].forEach(semester => {
+                    const isAvailable = availableSemesters.has(semester);
+                    const shouldRestore = semestersToRestore.map(String).includes(semester);
+                    const isChecked = shouldRestore && isAvailable;
+
+                    if (isChecked) {
+                        selectedSemesters.add(semester);
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = `
+                <input class="form-check-input semester-checkbox" 
+                       type="checkbox" 
+                       name="filter_semester" 
+                       value="${semester}" 
+                       id="sem${semester}"
+                       ${isAvailable ? '' : 'disabled'}
+                       ${isChecked ? 'checked' : ''}>
+                <label class="form-check-label" for="sem${semester}">
+                    Semester ${semester} ${isAvailable ? '' : '(No students)'}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.semester-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleSemesterChange);
+                });
+
+                updateSummary();
+            }
+
+            function handleSemesterChange(e) {
+                const semester = e.target.value;
+
+                if (e.target.checked) {
+                    selectedSemesters.add(semester);
+                } else {
+                    selectedSemesters.delete(semester);
+                }
+
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const summaryEl = document.getElementById('filter-summary');
+                const countEl = document.getElementById('student-count');
+                const boxEl = document.getElementById('filter-summary-box');
+
+                if (selectedMajors.size === 0 && selectedYears.size === 0 && selectedSemesters.size === 0) {
+                    summaryEl.textContent = 'All Students';
+                    countEl.textContent = '';
+                    boxEl.className = 'filter-summary all-students';
+                    return;
+                }
+
+                const parts = [];
+
+                if (selectedMajors.size > 0) {
+                    parts.push(`Major: ${Array.from(selectedMajors).join(', ')}`);
+                }
+
+                if (selectedYears.size > 0) {
+                    parts.push(`Year ${Array.from(selectedYears).join(', ')}`);
+                }
+
+                if (selectedSemesters.size > 0) {
+                    parts.push(`Semester ${Array.from(selectedSemesters).join(', ')}`);
+                }
+
+                summaryEl.textContent = parts.join(' | ');
+                boxEl.className = 'filter-summary filtered';
+
+                let count = 0;
+                Object.entries(studentData).forEach(([key, info]) => {
+                    const matchMajor = selectedMajors.size === 0 || selectedMajors.has(info.major);
+                    const matchYear = selectedYears.size === 0 || selectedYears.has(String(info.year));
+                    const matchSemester = selectedSemesters.size === 0 ||
+                        info.semesters.some(s => selectedSemesters.has(String(s)));
+
+                    if (matchMajor && matchYear && matchSemester) {
+                        count += info.count;
+                    }
+                });
+
+                countEl.textContent = `📊 Approximately ${count} eligible student${count !== 1 ? 's' : ''}`;
+            }
+
+            // Start loading when page loads
+            document.addEventListener('DOMContentLoaded', loadFilterData);
+        })();
     </script>
+
 </body>
 
 </html>

@@ -13,7 +13,6 @@ from services.exam_service import (
 from .template_engine import render
 from core.firebase_db import db
 
-
 def _parse_form(body: str) -> dict:
     """Parse form data from POST request"""
     data = parse_qs(body)
@@ -89,7 +88,7 @@ def get_admin_exam_list():
 
                     if now > deadline_dt:
                         grading_status = (
-                            '<span class="badge bg-danger ms-2"> Grading Closed</span>'
+                            '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
                         )
                         grading_display = (
                             f"Closed on {grading_deadline} at {grading_time}"
@@ -102,11 +101,11 @@ def get_admin_exam_list():
                         hours_remaining = time_remaining.seconds // 3600
 
                         if days_remaining == 0 and hours_remaining < 24:
-                            grading_status = f'<span class="badge bg-danger ms-2"> {hours_remaining}h Left</span>'
+                            grading_status = f'<span class="badge bg-danger ms-2">⚠️ {hours_remaining}h Left</span>'
                         elif days_remaining < 2:
-                            grading_status = f'<span class="badge bg-warning text-dark ms-2"> {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-warning text-dark ms-2">⏰ {days_remaining}d Left</span>'
                         else:
-                            grading_status = f'<span class="badge bg-info ms-2"> {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-info ms-2">✓ {days_remaining}d Left</span>'
 
                         grading_display = (
                             f"Open until {grading_deadline} at {grading_time}"
@@ -114,7 +113,7 @@ def get_admin_exam_list():
 
                 except ValueError:
                     grading_status = (
-                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2">❌ Invalid Date</span>'
                     )
                     grading_display = (
                         f"{grading_deadline} at {grading_time} (Invalid format)"
@@ -140,12 +139,12 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now >= release_dt:
-                        release_status = '<span class="badge bg-success ms-2"> Results Released</span>'
+                        release_status = '<span class="badge bg-success ms-2">✅ Results Released</span>'
                     else:
-                        release_status = '<span class="badge bg-warning text-dark ms-2"> Scheduled</span>'
+                        release_status = '<span class="badge bg-warning text-dark ms-2">📅 Scheduled</span>'
                 except ValueError:
                     release_status = (
-                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2">❌ Invalid Date</span>'
                     )
             else:
                 release_status = '<span class="badge bg-secondary ms-2">Not Set</span>'
@@ -165,7 +164,7 @@ def get_admin_exam_list():
                     finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
                 else:
                     finalized_at_str = str(finalized_at)
-                finalized_badge = f'<span class="badge bg-dark ms-2"> Finalized on {finalized_at_str}</span>'
+                finalized_badge = f'<span class="badge bg-dark ms-2">✓ Finalized on {finalized_at_str}</span>'
                 # If finalized, grading is definitely closed regardless of deadline
                 is_grading_closed = True
 
@@ -198,25 +197,30 @@ def get_admin_exam_list():
                     <p class="exam-desc">{description}</p>
 
                     <div class="exam-meta">
-                        <span> Exam: {exam_date}</span>
-                        <span> {start_time} - {end_time}</span>
-                        <span> {duration} mins</span>
+                        <span>📅 Exam: {exam_date}</span>
+                        <span>🕐 {start_time} - {end_time}</span>
+                        <span>⏱️ {duration} mins</span>
                         <span class="exam-id">ID: {e_id}</span>
                     </div>
 
                     <div class="exam-meta mt-2 p-2 bg-light rounded">
-                        <div><strong> Grading Deadline:</strong> {grading_display}</div>
-                        <div class="mt-1"><strong> Result Release:</strong> {release_display}</div>
+                        <div><strong>⏰ Grading Deadline:</strong> {grading_display}</div>
+                        <div class="mt-1"><strong>📅 Result Release:</strong> {release_display}</div>
                     </div>
                 </div>
 
                 <div class="exam-actions d-flex flex-column gap-2">
                     <a href="/admin/grading-settings?exam_id={e_id}"
                        class="btn btn-sm btn-primary">
-                       Settings
+                       ⚙️ Settings
                     </a>
 
                     {grade_button_html}
+                    
+                    <a href="/admin/performance-report?exam_id={e_id}"
+                       class="btn btn-sm btn-info">
+                       📊 View Performance
+                    </a>
                 </div>
             </div>
             """
