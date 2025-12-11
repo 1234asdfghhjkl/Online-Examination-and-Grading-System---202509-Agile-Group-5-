@@ -88,7 +88,7 @@ def get_admin_exam_list():
 
                     if now > deadline_dt:
                         grading_status = (
-                            '<span class="badge bg-danger ms-2"> Grading Closed</span>'
+                            '<span class="badge bg-danger ms-2">🔒 Grading Closed</span>'
                         )
                         grading_display = (
                             f"Closed on {grading_deadline} at {grading_time}"
@@ -101,11 +101,11 @@ def get_admin_exam_list():
                         hours_remaining = time_remaining.seconds // 3600
 
                         if days_remaining == 0 and hours_remaining < 24:
-                            grading_status = f'<span class="badge bg-danger ms-2"> {hours_remaining}h Left</span>'
+                            grading_status = f'<span class="badge bg-danger ms-2">⚠️ {hours_remaining}h Left</span>'
                         elif days_remaining < 2:
-                            grading_status = f'<span class="badge bg-warning text-dark ms-2"> {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-warning text-dark ms-2">⏰ {days_remaining}d Left</span>'
                         else:
-                            grading_status = f'<span class="badge bg-info ms-2"> {days_remaining}d Left</span>'
+                            grading_status = f'<span class="badge bg-info ms-2">✓ {days_remaining}d Left</span>'
 
                         grading_display = (
                             f"Open until {grading_deadline} at {grading_time}"
@@ -113,7 +113,7 @@ def get_admin_exam_list():
 
                 except ValueError:
                     grading_status = (
-                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2">❌ Invalid Date</span>'
                     )
                     grading_display = (
                         f"{grading_deadline} at {grading_time} (Invalid format)"
@@ -139,12 +139,12 @@ def get_admin_exam_list():
                     now = datetime.now()
 
                     if now >= release_dt:
-                        release_status = '<span class="badge bg-success ms-2"> Results Released</span>'
+                        release_status = '<span class="badge bg-success ms-2">✅ Results Released</span>'
                     else:
-                        release_status = '<span class="badge bg-warning text-dark ms-2"> Scheduled</span>'
+                        release_status = '<span class="badge bg-warning text-dark ms-2">📅 Scheduled</span>'
                 except ValueError:
                     release_status = (
-                        '<span class="badge bg-secondary ms-2"> Invalid Date</span>'
+                        '<span class="badge bg-secondary ms-2">❌ Invalid Date</span>'
                     )
             else:
                 release_status = '<span class="badge bg-secondary ms-2">Not Set</span>'
@@ -164,7 +164,7 @@ def get_admin_exam_list():
                     finalized_at_str = finalized_at.strftime("%Y-%m-%d %H:%M")
                 else:
                     finalized_at_str = str(finalized_at)
-                finalized_badge = f'<span class="badge bg-dark ms-2"> Finalized on {finalized_at_str}</span>'
+                finalized_badge = f'<span class="badge bg-dark ms-2">✓ Finalized on {finalized_at_str}</span>'
                 # If finalized, grading is definitely closed regardless of deadline
                 is_grading_closed = True
 
@@ -216,21 +216,11 @@ def get_admin_exam_list():
                     </a>
 
                     {grade_button_html}
-<<<<<<< HEAD
                     
                     <a href="/admin/performance-report?exam_id={e_id}"
                        class="btn btn-sm btn-info">
-                       📊 Performance Report
+                       📊 View Performance
                     </a>
-
-                    {"" if is_finalized else f'''
-                    <a href="/admin/finalize-exam?exam_id={e_id}"
-                       class="btn btn-sm btn-warning">
-                       🔒 Finalize Results
-                    </a>
-                    '''}
-=======
->>>>>>> c4dadf46b6f6019f5ae6d59094a1c1d087396f16
                 </div>
             </div>
             """

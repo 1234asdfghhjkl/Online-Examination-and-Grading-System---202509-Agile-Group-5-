@@ -1,16 +1,11 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
-<<<<<<< HEAD
-from io import BytesIO 
-from cgi import parse_header, parse_multipart 
-import json # ADDED: Import for json module
-=======
 
 # Replaced 'cgi' with 'email' library for Python 3.13+ compatibility
 from email.parser import BytesParser
 from email import policy
 from urllib.parse import urlparse, parse_qs
->>>>>>> c4dadf46b6f6019f5ae6d59094a1c1d087396f16
+import json
 
 # Import authentication routes
 from web.auth_routes import get_login_page, post_login
@@ -19,20 +14,11 @@ from web.admin_routes import (
     get_admin_exam_list,
     get_set_result_release,
     post_set_result_release,
-<<<<<<< HEAD
-    get_grading_settings,  
-    get_finalize_exam,  
-    post_grading_settings,  
-    post_finalize_exam, 
-    get_account_import_page, 
-    post_import_accounts,
-=======
     get_grading_settings,
     post_grading_settings,
     get_account_import_page,
     post_import_accounts,
     get_admin_student_list,
->>>>>>> c4dadf46b6f6019f5ae6d59094a1c1d087396f16
 )
 
 from web.template_engine import STATIC_DIR
@@ -528,7 +514,7 @@ if __name__ == "__main__":
         print("\n=== LOGIN CREDENTIALS ===")
         print("Admin: Use Admin ID 'A001' + IC number '010101070101'")
         print("Lecturer: Use Lecturer ID + IC number (e.g., L001 / 950101011234)")
-        print("Student: Use Student ID + IC number (e.g., 100123 / 030505010567)")
+        print("Student: Use Student ID + IC number (e.g., 100456 / 031105010567)")
         print("\n=== ROUTES ===")
         print(f"Login: http://{HOST}:{PORT}/login")
         print(f"Profile: http://{HOST}:{PORT}/profile?user_id=100123")
