@@ -1,146 +1,828 @@
-<div class="card card-main">
-    <div class="card-header">
-        <h3 class="mb-1">Create New Exam</h3>
-        <p class="mb-0">Step 1 of 3 · Define the basic exam details.</p>
-    </div>
-    <div class="card-body p-4">
+<!DOCTYPE html>
+<html lang="en">
 
-        <div class="stepper">
-            <div class="stepper-item">
-                <div class="step-circle current">1</div>
-                <span class="step-label">Exam Details</span>
-                <div class="step-caption">You are here</div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Exam</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .card-main {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border: none;
+        }
+
+        .card-header h3 {
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            padding: 0 1rem;
+        }
+
+        .stepper-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 0 auto 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle.current {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .step-circle.done {
+            background: #10b981;
+            color: white;
+        }
+
+        .step-circle.next {
+            background: #e5e7eb;
+            color: #9ca3af;
+        }
+
+        .step-label {
+            display: block;
+            font-weight: 600;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+
+        .step-caption {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .stepper-item:not(:last-child) .step-circle::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: calc(50% + 25px);
+            width: calc(100% - 50px);
+            height: 2px;
+            background: #e5e7eb;
+            z-index: 1;
+        }
+
+        .stepper-item .step-circle.current::after,
+        .stepper-item .step-circle.done::after {
+            background: linear-gradient(90deg, #10b981, #667eea);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control,
+        .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 0.875rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .filter-section {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .filter-section-header {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 1rem 1.5rem;
+            margin: -1.5rem -1.5rem 1.5rem;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .filter-section-header h6 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .filter-section-header small {
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+
+        .filter-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .filter-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .filter-container::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .filter-container::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .filter-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .form-check {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .form-check:hover {
+            background: #f9fafb;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-check-input:disabled~.form-check-label {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .filter-summary {
+            background: white;
+            border: 2px solid #d1fae5;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .filter-summary.all-students {
+            border-color: #dbeafe;
+            background: #eff6ff;
+        }
+
+        .filter-summary.filtered {
+            border-color: #d1fae5;
+            background: #ecfdf5;
+        }
+
+        .filter-summary-text {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .student-count {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .filter-placeholder {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #9ca3af;
+        }
+
+        .filter-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .text-muted {
+            color: #6b7280 !important;
+        }
+
+        small.text-muted {
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="card-main">
+            <div class="card-header">
+                <h3 class="mb-1">📝 Create New Exam</h3>
+                <p class="mb-0 opacity-90">Step 1 of 3 · Define the basic exam details</p>
             </div>
-            <div class="stepper-item">
-                <div class="step-circle next">2</div>
-                <span class="step-label">Add Questions</span>
-                <div class="step-caption">MCQ / Short Answer</div>
-            </div>
-            <div class="stepper-item">
-                <div class="step-circle next">3</div>
-                <span class="step-label">Publish</span>
-                <div class="step-caption">Finalize</div>
+
+            <div class="card-body">
+                <!-- Progress Stepper -->
+                <div class="stepper">
+                    <div class="stepper-item">
+                        <div class="step-circle current">1</div>
+                        <span class="step-label">Exam Details</span>
+                        <div class="step-caption">You are here</div>
+                    </div>
+                    <div class="stepper-item">
+                        <div class="step-circle next">2</div>
+                        <span class="step-label">Add Questions</span>
+                        <div class="step-caption">MCQ / Short Answer</div>
+                    </div>
+                    <div class="stepper-item">
+                        <div class="step-circle next">3</div>
+                        <span class="step-label">Publish</span>
+                        <div class="step-caption">Finalize</div>
+                    </div>
+                </div>
+
+                <!-- Error Messages -->
+                {{errors_html}}
+
+                <!-- Main Form -->
+                <form action="/submit-exam" method="POST" id="exam-form">
+                    <input type="hidden" name="exam_id" value="{{exam_id}}">
+
+                    <!-- Basic Information -->
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Exam Title *</label>
+                            <input type="text" name="title" class="form-control"
+                                placeholder="e.g., Web Programming Midterm Exam" required value="{{title}}">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Description *</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                placeholder="Briefly describe what this exam will cover"
+                                required>{{description}}</textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Exam Date *</label>
+                            <input type="date" name="exam_date" class="form-control" required value="{{exam_date}}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Start Time *</label>
+                            <input type="time" name="start_time" id="start_time" class="form-control" required
+                                value="{{start_time}}">
+                            <small class="text-muted">24-hour format</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">End Time *</label>
+                            <input type="time" name="end_time" id="end_time" class="form-control" required
+                                value="{{end_time}}">
+                            <small class="text-muted">Auto-calculated</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Duration (minutes) *</label>
+                            <input type="number" name="duration" id="duration" class="form-control"
+                                placeholder="e.g., 60" min="1" required value="{{duration}}">
+                            <small class="text-muted">Auto-calculated</small>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Instructions for Students *</label>
+                            <textarea name="instructions" class="form-control" rows="4"
+                                placeholder="Example: Ensure a stable internet connection. Do not refresh the page during the exam."
+                                required>{{instructions}}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Student Filters -->
+                    <div class="filter-section">
+                        <div class="filter-section-header">
+                            <h6>👥 Student Filters (Optional)</h6>
+                            <small>Select specific majors, years, and semesters - or leave empty for all
+                                students</small>
+                        </div>
+
+                        <div id="filter-loading" style="display: none;">
+                            <div class="text-center py-4">
+                                <div class="loading-spinner"></div>
+                                <p class="mt-3 text-muted">Loading student data...</p>
+                            </div>
+                        </div>
+
+                        <div id="filter-content" style="display: none;">
+                            <div class="row g-3">
+                                <!-- Major Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">🎓 Major (Select First)</label>
+                                    <div class="filter-container" id="major-filter-container">
+                                        <div class="filter-placeholder">
+                                            <i>📚</i>
+                                            <p class="mb-0">Loading majors...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Year Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">📚 Year</label>
+                                    <div class="filter-container" id="year-filter-container">
+                                        <div class="filter-placeholder">
+                                            <p class="mb-0 small">Select a major first</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Semester Filter -->
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">📅 Semester</label>
+                                    <div class="filter-container" id="semester-filter-container">
+                                        <div class="filter-placeholder">
+                                            <p class="mb-0 small">Select major and year first</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Filter Summary -->
+                            <div class="filter-summary all-students" id="filter-summary-box">
+                                <div class="filter-summary-text">
+                                    <strong>📋 Current Selection:</strong>
+                                    <span id="filter-summary">All Students</span>
+                                </div>
+                                <div class="student-count" id="student-count"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            Next Step →
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        {{errors_html}}
-
-        <form action="/submit-exam" method="POST" class="row g-3">
-            <input type="hidden" name="exam_id" value="{{exam_id}}">
-            <div class="col-12">
-                <label class="form-label">Exam Title</label>
-                <input type="text" name="title" class="form-control" placeholder="e.g. Web Programming Midterm" required
-                    value="{{title}}">
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Description</label>
-                <textarea name="description" class="form-control" rows="3"
-                    placeholder="Briefly describe what this exam will cover." required>{{description}}</textarea>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Exam Date</label>
-                <input type="date" name="exam_date" class="form-control" required value="{{exam_date}}">
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Start Time</label>
-                <input type="time" name="start_time" id="start_time" class="form-control" required
-                    value="{{start_time}}">
-                <small class="text-muted">24-hour format</small>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">End Time</label>
-                <input type="time" name="end_time" id="end_time" class="form-control" required value="{{end_time}}">
-                <small class="text-muted">Auto-calculated</small>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Duration (minutes)</label>
-                <input type="number" name="duration" id="duration" class="form-control" placeholder="e.g. 60" min="1"
-                    required value="{{duration}}">
-                <small class="text-muted">Auto-calculated</small>
-            </div>
-
-            <div class="col-12">
-                <label class="form-label">Instructions for Students</label>
-                <textarea name="instructions" class="form-control" rows="4"
-                    placeholder="Example: Ensure a stable internet connection. Do not refresh the page."
-                    required>{{instructions}}</textarea>
-            </div>
-
-            <div class="col-12 d-flex justify-content-end mt-2">
-                <button type="submit" class="btn btn-primary btn-rounded">
-                    Next
-                </button>
-            </div>
-        </form>
     </div>
-</div>
 
-<script>
-(function() {
-    const startTimeInput = document.getElementById('start_time');
-    const endTimeInput = document.getElementById('end_time');
-    const durationInput = document.getElementById('duration');
+    <script>
+        // Time Calculation Logic (keep as is)
+        (function () {
+            const startTimeInput = document.getElementById('start_time');
+            const endTimeInput = document.getElementById('end_time');
+            const durationInput = document.getElementById('duration');
 
-    // Helper: Convert time string (HH:MM) to minutes from midnight
-    function timeToMinutes(timeStr) {
-        if (!timeStr) return null;
-        const [hours, minutes] = timeStr.split(':').map(Number);
-        return hours * 60 + minutes;
-    }
-
-    // Helper: Convert minutes from midnight to time string (HH:MM)
-    function minutesToTime(minutes) {
-        const hours = Math.floor(minutes / 60) % 24;
-        const mins = minutes % 60;
-        return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    }
-
-    // Calculate End Time from Start Time + Duration
-    function calculateEndTime() {
-        const startTime = startTimeInput.value;
-        const duration = parseInt(durationInput.value);
-
-        if (startTime && duration > 0) {
-            const startMinutes = timeToMinutes(startTime);
-            const endMinutes = startMinutes + duration;
-            endTimeInput.value = minutesToTime(endMinutes);
-        }
-    }
-
-    // Calculate Duration from Start Time and End Time
-    function calculateDuration() {
-        const startTime = startTimeInput.value;
-        const endTime = endTimeInput.value;
-
-        if (startTime && endTime) {
-            const startMinutes = timeToMinutes(startTime);
-            let endMinutes = timeToMinutes(endTime);
-
-            // Handle cases where end time is on the next day
-            if (endMinutes <= startMinutes) {
-                endMinutes += 24 * 60; // Add 24 hours
+            function timeToMinutes(timeStr) {
+                if (!timeStr) return null;
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
             }
 
-            const duration = endMinutes - startMinutes;
-            if (duration > 0) {
-                durationInput.value = duration;
+            function minutesToTime(minutes) {
+                const hours = Math.floor(minutes / 60) % 24;
+                const mins = minutes % 60;
+                return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
             }
-        }
-    }
 
-    // Event listeners
-    startTimeInput.addEventListener('change', calculateEndTime);
-    durationInput.addEventListener('input', calculateEndTime);
-    endTimeInput.addEventListener('change', calculateDuration);
+            function calculateEndTime() {
+                const startTime = startTimeInput.value;
+                const duration = parseInt(durationInput.value);
 
-    // Initial calculation on page load if values exist
-    if (startTimeInput.value && durationInput.value) {
-        calculateEndTime();
-    }
-})();
-</script>
+                if (startTime && duration > 0) {
+                    const startMinutes = timeToMinutes(startTime);
+                    const endMinutes = startMinutes + duration;
+                    endTimeInput.value = minutesToTime(endMinutes);
+                }
+            }
+
+            function calculateDuration() {
+                const startTime = startTimeInput.value;
+                const endTime = endTimeInput.value;
+
+                if (startTime && endTime) {
+                    const startMinutes = timeToMinutes(startTime);
+                    let endMinutes = timeToMinutes(endTime);
+
+                    if (endMinutes <= startMinutes) {
+                        endMinutes += 24 * 60;
+                    }
+
+                    const duration = endMinutes - startMinutes;
+                    if (duration > 0) {
+                        durationInput.value = duration;
+                    }
+                }
+            }
+
+            startTimeInput.addEventListener('change', calculateEndTime);
+            durationInput.addEventListener('input', calculateEndTime);
+            endTimeInput.addEventListener('change', calculateDuration);
+
+            if (startTimeInput.value && durationInput.value) {
+                calculateEndTime();
+            }
+        })();
+
+        // ✅ IMPROVED Dynamic Filter System
+        (function () {
+            let studentData = {};
+            let allMajors = [];
+            let selectedMajors = new Set();
+            let selectedYears = new Set();
+            let selectedSemesters = new Set();
+
+            async function loadFilterData() {
+                const loadingEl = document.getElementById('filter-loading');
+                const contentEl = document.getElementById('filter-content');
+
+                loadingEl.style.display = 'block';
+                contentEl.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/get-filter-options');
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    studentData = data.combinations || {};
+                    allMajors = data.majors || [];
+
+                    console.log('✅ API Response:', data);
+                    console.log('✅ Loaded majors:', allMajors);
+                    console.log('✅ Student combinations:', Object.keys(studentData).length);
+
+                    if (allMajors.length === 0) {
+                        console.warn('⚠️ No majors returned from API, using fallback');
+                        allMajors = ['Computer Science', 'Mechanical Engineering', 'Business Administration'];
+                    }
+
+                    populateMajors(allMajors);
+
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'block';
+
+                } catch (error) {
+                    console.error('❌ Failed to load filter options:', error);
+
+                    // Fallback to default majors
+                    allMajors = ['Computer Science', 'Mechanical Engineering', 'Business Administration'];
+                    studentData = {
+                        'Computer Science|1': { major: 'Computer Science', year: '1', semesters: ['1', '2'], count: 50 },
+                        'Computer Science|2': { major: 'Computer Science', year: '2', semesters: ['1', '2'], count: 45 },
+                        'Mechanical Engineering|1': { major: 'Mechanical Engineering', year: '1', semesters: ['1', '2'], count: 30 },
+                        'Business Administration|1': { major: 'Business Administration', year: '1', semesters: ['1', '2'], count: 40 }
+                    };
+
+                    populateMajors(allMajors);
+
+                    loadingEl.style.display = 'none';
+                    contentEl.style.display = 'block';
+                }
+            }
+
+            function populateMajors(majors) {
+                const container = document.getElementById('major-filter-container');
+                container.innerHTML = '';
+
+                if (majors.length === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small text-danger">No majors found in database</p></div>';
+                    return;
+                }
+
+                console.log('✅ Populating UI with majors:', majors);
+
+                majors.forEach(major => {
+                    const safeId = major.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+                    div.innerHTML = `
+                <input class="form-check-input major-checkbox" 
+                       type="checkbox" 
+                       name="filter_major" 
+                       value="${major}" 
+                       id="major_${safeId}">
+                <label class="form-check-label" for="major_${safeId}">
+                    ${major}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                document.querySelectorAll('.major-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleMajorChange);
+                });
+
+                console.log('✅ UI populated with', majors.length, 'majors');
+            }
+
+            function handleMajorChange(e) {
+                const major = e.target.value;
+
+                if (e.target.checked) {
+                    selectedMajors.add(major);
+                } else {
+                    selectedMajors.delete(major);
+                }
+
+                console.log('✅ Selected majors:', Array.from(selectedMajors));
+                updateYearOptions();
+                updateSummary();
+            }
+
+            function updateYearOptions() {
+                const container = document.getElementById('year-filter-container');
+
+                if (selectedMajors.size === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small">Select a major first</p></div>';
+                    selectedYears.clear();
+                    updateSemesterOptions();
+                    return;
+                }
+
+                const availableYears = new Set();
+
+                Object.entries(studentData).forEach(([key, info]) => {
+                    if (selectedMajors.has(info.major)) {
+                        availableYears.add(String(info.year));
+                    }
+                });
+
+                console.log('✅ Available years for selected majors:', Array.from(availableYears));
+
+                container.innerHTML = '';
+
+                ['1', '2', '3', '4'].forEach(year => {
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+
+                    const isAvailable = availableYears.has(year);
+                    const isChecked = selectedYears.has(year) && isAvailable;
+
+                    div.innerHTML = `
+                <input class="form-check-input year-checkbox" 
+                       type="checkbox" 
+                       name="filter_year" 
+                       value="${year}" 
+                       id="year${year}"
+                       ${isAvailable ? '' : 'disabled'}
+                       ${isChecked ? 'checked' : ''}>
+                <label class="form-check-label" for="year${year}">
+                    Year ${year} ${isAvailable ? '' : '(No students)'}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                selectedYears.forEach(year => {
+                    if (!availableYears.has(year)) {
+                        selectedYears.delete(year);
+                    }
+                });
+
+                document.querySelectorAll('.year-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleYearChange);
+                });
+
+                updateSemesterOptions();
+            }
+
+            function handleYearChange(e) {
+                const year = e.target.value;
+
+                if (e.target.checked) {
+                    selectedYears.add(year);
+                } else {
+                    selectedYears.delete(year);
+                }
+
+                console.log('✅ Selected years:', Array.from(selectedYears));
+                updateSemesterOptions();
+                updateSummary();
+            }
+
+            function updateSemesterOptions() {
+                const container = document.getElementById('semester-filter-container');
+
+                if (selectedMajors.size === 0 || selectedYears.size === 0) {
+                    container.innerHTML = '<div class="filter-placeholder"><p class="mb-0 small">Select major and year first</p></div>';
+                    selectedSemesters.clear();
+                    updateSummary();
+                    return;
+                }
+
+                const availableSemesters = new Set();
+
+                Object.entries(studentData).forEach(([key, info]) => {
+                    if (selectedMajors.has(info.major) && selectedYears.has(String(info.year))) {
+                        info.semesters.forEach(sem => availableSemesters.add(String(sem)));
+                    }
+                });
+
+                console.log('✅ Available semesters:', Array.from(availableSemesters));
+
+                container.innerHTML = '';
+
+                ['1', '2'].forEach(semester => {
+                    const div = document.createElement('div');
+                    div.className = 'form-check';
+
+                    const isAvailable = availableSemesters.has(semester);
+                    const isChecked = selectedSemesters.has(semester) && isAvailable;
+
+                    div.innerHTML = `
+                <input class="form-check-input semester-checkbox" 
+                       type="checkbox" 
+                       name="filter_semester" 
+                       value="${semester}" 
+                       id="sem${semester}"
+                       ${isAvailable ? '' : 'disabled'}
+                       ${isChecked ? 'checked' : ''}>
+                <label class="form-check-label" for="sem${semester}">
+                    Semester ${semester} ${isAvailable ? '' : '(No students)'}
+                </label>
+            `;
+                    container.appendChild(div);
+                });
+
+                selectedSemesters.forEach(sem => {
+                    if (!availableSemesters.has(sem)) {
+                        selectedSemesters.delete(sem);
+                    }
+                });
+
+                document.querySelectorAll('.semester-checkbox').forEach(cb => {
+                    cb.addEventListener('change', handleSemesterChange);
+                });
+
+                updateSummary();
+            }
+
+            function handleSemesterChange(e) {
+                const semester = e.target.value;
+
+                if (e.target.checked) {
+                    selectedSemesters.add(semester);
+                } else {
+                    selectedSemesters.delete(semester);
+                }
+
+                console.log('✅ Selected semesters:', Array.from(selectedSemesters));
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const summaryEl = document.getElementById('filter-summary');
+                const countEl = document.getElementById('student-count');
+                const boxEl = document.getElementById('filter-summary-box');
+
+                if (selectedMajors.size === 0 && selectedYears.size === 0 && selectedSemesters.size === 0) {
+                    summaryEl.textContent = 'All Students';
+                    countEl.textContent = '';
+                    boxEl.className = 'filter-summary all-students';
+                    return;
+                }
+
+                const parts = [];
+
+                if (selectedMajors.size > 0) {
+                    parts.push(`Major: ${Array.from(selectedMajors).join(', ')}`);
+                }
+
+                if (selectedYears.size > 0) {
+                    parts.push(`Year ${Array.from(selectedYears).join(', ')}`);
+                }
+
+                if (selectedSemesters.size > 0) {
+                    parts.push(`Semester ${Array.from(selectedSemesters).join(', ')}`);
+                }
+
+                summaryEl.textContent = parts.join(' | ');
+                boxEl.className = 'filter-summary filtered';
+
+                let count = 0;
+                Object.entries(studentData).forEach(([key, info]) => {
+                    const matchMajor = selectedMajors.size === 0 || selectedMajors.has(info.major);
+                    const matchYear = selectedYears.size === 0 || selectedYears.has(String(info.year));
+                    const matchSemester = selectedSemesters.size === 0 ||
+                        info.semesters.some(s => selectedSemesters.has(String(s)));
+
+                    if (matchMajor && matchYear && matchSemester) {
+                        count += info.count;
+                    }
+                });
+
+                countEl.textContent = `📊 Approximately ${count} eligible student${count !== 1 ? 's' : ''}`;
+
+                console.log('✅ Filter summary updated:', parts.join(' | '));
+            }
+
+            // Start loading when page loads
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('✅ Page loaded, initializing filters...');
+                loadFilterData();
+            });
+        })();
+    </script>
+
+</body>
+
+</html>
