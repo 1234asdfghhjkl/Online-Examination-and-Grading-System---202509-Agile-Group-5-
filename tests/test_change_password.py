@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from urllib.parse import urlencode
 
 # Assuming these functions exist in web/password_routes.py based on your requirements

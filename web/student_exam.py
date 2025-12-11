@@ -120,8 +120,6 @@ def get_student_dashboard(student_id: str):
     Renders the student dashboard with filtered exams
     Renders the student dashboard with a list of available exams, submissions, and performance stats.
     """
-    # Import both service functions
-    from services.student_submission_service import get_student_submissions, get_student_performance_stats
 
     published_exams = get_all_published_exams()
 

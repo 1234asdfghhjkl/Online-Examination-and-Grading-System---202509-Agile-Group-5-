@@ -3,7 +3,7 @@ Student Filter Service - DEBUG VERSION
 """
 
 from typing import Dict, List
-from datetime import datetime
+from datetime import datetime, timezone
 from core.firebase_db import db
 
 
@@ -33,7 +33,7 @@ def save_exam_filters(exam_id: str, filters: Dict[str, List[str]]) -> None:
     # Update Firestore
     doc_ref.update({
         "student_filters": cleaned_filters,
-        "filters_updated_at": datetime.utcnow()
+        "filters_updated_at": datetime.now(timezone.utc)
     })
     
     # Verify it was saved

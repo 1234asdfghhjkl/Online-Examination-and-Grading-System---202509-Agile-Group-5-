@@ -95,8 +95,10 @@ def post_change_password(user_id: str, body: str) -> Tuple[str | None, int, str 
     try:
         # Determine role for auth check
         role = "student"
-        if user_id.upper().startswith("L"): role = "lecturer"
-        if user_id.upper().startswith("A"): role = "admin"
+        if user_id.upper().startswith("L"):
+            role = "lecturer"
+        if user_id.upper().startswith("A"):
+            role = "admin"
 
         # Verify credentials
         user_data = authenticate_user(user_id, old_password, role)
