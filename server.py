@@ -14,9 +14,7 @@ from web.admin_routes import (
     get_set_result_release,
     post_set_result_release,
     get_grading_settings,
-    get_finalize_exam,
     post_grading_settings,
-    post_finalize_exam,
     get_account_import_page,
     post_import_accounts,
     get_admin_student_list,
@@ -183,11 +181,6 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/admin/grading-settings":
             exam_id = query.get("exam_id", [""])[0]
             html_str, status = get_grading_settings(exam_id)
-            self._send_html(html_str, status)
-
-        elif path == "/admin/finalize-exam":
-            exam_id = query.get("exam_id", [""])[0]
-            html_str, status = get_finalize_exam(exam_id)
             self._send_html(html_str, status)
 
         elif path.startswith("/admin/set-result-release"):
@@ -431,10 +424,6 @@ class Handler(BaseHTTPRequestHandler):
         # -----------------------------------
         elif path == "/admin/save-grading-settings":
             html_str, status = post_grading_settings(body)
-            self._send_html(html_str, status)
-
-        elif path == "/admin/finalize-exam-confirm":
-            html_str, status = post_finalize_exam(body)
             self._send_html(html_str, status)
 
         elif path == "/admin/set-result-release":
