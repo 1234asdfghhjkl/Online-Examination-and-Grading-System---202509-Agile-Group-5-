@@ -1,6 +1,6 @@
 """
-Student Exam Handler
-Handles student exam access, timing, and submission
+Student Exam Handler - Updated with filtering
+Handles student exam access, timing, and submission with filter checks
 """
 
 import json
@@ -20,6 +20,7 @@ from services.exam_timing import (
     auto_submit_exam,
     get_server_time,
 )
+from services.student_filter_service import is_student_eligible
 from core.firebase_db import db
 
 
@@ -115,7 +116,7 @@ def _build_questions_html(exam_id: str) -> str:
 
 def get_student_dashboard(student_id: str):
     """
-    Renders the student dashboard with a list of available exams and submissions
+    Renders the student dashboard with filtered exams
     """
     from services.student_submission_service import get_student_submissions
 
@@ -124,16 +125,26 @@ def get_student_dashboard(student_id: str):
     # If no student ID is provided, default to a test one
     current_student_id = student_id if student_id else "test_student_01"
 
-    # Build available exams HTML
+    # Build available exams HTML - FILTER BY ELIGIBILITY
     exam_list_html = ""
-    if not published_exams:
+    eligible_exams = []
+    
+    for exam in published_exams:
+        e_id = exam.get("exam_id")
+        
+        # CHECK ELIGIBILITY
+        if is_student_eligible(current_student_id, e_id):
+            eligible_exams.append(exam)
+    
+    if not eligible_exams:
         exam_list_html = """
         <div class="alert alert-info">
-            No exams have been published yet.
+            <h5>📚 No Exams Available</h5>
+            <p class="mb-0">There are no exams currently available for you. Check back later!</p>
         </div>
         """
     else:
-        for exam in published_exams:
+        for exam in eligible_exams:
             e_id = exam.get("exam_id")
             title = html.escape(exam.get("title", "Untitled"))
             duration = exam.get("duration", 0)
@@ -251,7 +262,7 @@ def get_student_dashboard(student_id: str):
 def get_student_exam(exam_id: str, student_id: str):
     """
     GET handler for student exam page
-    Shows exam based on timing and access rules
+    Shows exam based on timing, access rules, AND ELIGIBILITY
     """
     if not exam_id or not student_id:
         error_html = render(
@@ -271,6 +282,17 @@ def get_student_exam(exam_id: str, student_id: str):
             {"message": f"Exam {exam_id} not found", "back_url": "/student-dashboard"},
         )
         return error_html, 404
+
+    # CHECK ELIGIBILITY
+    if not is_student_eligible(student_id, exam_id):
+        error_html = render(
+            "error.html",
+            {
+                "message": "You are not eligible to take this exam. This exam is restricted to specific student groups.",
+                "back_url": f"/student-dashboard?student_id={student_id}",
+            },
+        )
+        return error_html, 403
 
     # Check access
     access_info = check_exam_access(exam_id)
@@ -349,6 +371,17 @@ def post_submit_student_exam(body: str):
     if not exam_id or not student_id:
         return "<h1>Error: Missing required fields</h1>", 400
 
+    # Check eligibility
+    if not is_student_eligible(student_id, exam_id):
+        error_html = render(
+            "error.html",
+            {
+                "message": "You are not eligible to submit this exam.",
+                "back_url": f"/student-dashboard?student_id={student_id}",
+            },
+        )
+        return error_html, 403
+
     # Check if already submitted
     submission_info = check_student_submission_status(exam_id, student_id)
 
@@ -386,14 +419,6 @@ def post_submit_student_exam(body: str):
     grading_result = grade_mcq_submission(exam_id, student_id, answers)
     save_grading_result(submission_id, grading_result)
 
-    # Redirect to results page
-    # success_html = f"""
-    # <html>
-    #  <head>
-    #    <meta http-equiv="refresh" content="0; url=/exam-result?exam_id={exam_id}&student_id={student_id}">
-    #  </head>
-    #  <body>Grading your exam...</body>
-    # </html>
     success_html = f"""
     <html>
       <head>

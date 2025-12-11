@@ -117,8 +117,11 @@ def get_grade_submissions(exam_id: str):
                     status_badge = (
                         '<span class="status-badge graded">✅ Fully Graded</span>'
                     )
-                    action_btn = """
-                    <a href="" class="btn btn-sm btn-outline-success">View Results</a>
+                    action_btn = f"""
+                    <a href="/view-submission-result?submission_id={submission_id}" 
+                    class="btn btn-sm btn-outline-success">
+                        View Results
+                    </a>
                     """
                 elif sa_graded:
                     status_badge = (
@@ -396,3 +399,202 @@ def post_save_short_answer_grades(body: str):
     </html>
     """
     return redirect_html, 200
+
+def get_view_submission_result(submission_id: str):
+    """
+    GET handler for viewing detailed grading results for a submission
+    Shows MCQ and Short Answer results
+    """
+    if not submission_id:
+        message_html = """
+        <div class="alert alert-danger">
+            Missing submission ID
+        </div>
+        """
+        html_str = render(
+            "view_submission_result.html",
+            {
+                "submission_id": "",
+                "exam_title": "",
+                "student_id": "",
+                "message_html": message_html,
+                "mcq_results_html": "",
+                "sa_results_html": "",
+                "scores_html": "",
+            },
+        )
+        return html_str, 400
+
+    submission = get_submission_with_questions(submission_id)
+    if not submission:
+        message_html = """
+        <div class="alert alert-danger">
+            Submission not found
+        </div>
+        """
+        html_str = render(
+            "view_submission_result.html",
+            {
+                "submission_id": submission_id,
+                "exam_title": "",
+                "student_id": "",
+                "message_html": message_html,
+                "mcq_results_html": "",
+                "sa_results_html": "",
+                "scores_html": "",
+            },
+        )
+        return html_str, 404
+
+    exam_id = submission.get("exam_id")
+    exam = get_exam_by_id(exam_id)
+    
+    student_id = submission.get("student_id", "Unknown")
+    submitted_at = submission.get("submitted_at")
+    submitted_time = submitted_at.strftime("%Y-%m-%d %H:%M:%S") if submitted_at else "N/A"
+
+    # Get scores
+    mcq_score = submission.get("mcq_score", 0)
+    mcq_total = submission.get("mcq_total", 0)
+    sa_obtained = submission.get("sa_obtained_marks", 0)
+    sa_total = submission.get("sa_total_marks", 0)
+    overall_obtained = submission.get("overall_obtained_marks", 0)
+    overall_total = submission.get("overall_total_marks", 0)
+    overall_percentage = submission.get("overall_percentage", 0)
+
+    # Build scores summary
+    scores_html = f"""
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{overall_obtained}/{overall_total}</h3>
+                    <p class="text-muted mb-0">Overall Score</p>
+                    <p class="text-success fw-bold">{overall_percentage}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{mcq_score}/{mcq_total}</h3>
+                    <p class="text-muted mb-0">MCQ Score</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{sa_obtained}/{sa_total}</h3>
+                    <p class="text-muted mb-0">Short Answer Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
+
+    # Build MCQ results
+    mcq_results_html = ""
+    grading_result = submission.get("grading_result", {})
+    question_results = grading_result.get("question_results", [])
+
+    if question_results:
+        mcq_results_html += '<h4 class="mb-3">📝 Multiple Choice Questions</h4>'
+        
+        for q_result in question_results:
+            q_no = q_result.get("question_no")
+            question_text = q_result.get("question_text", "")
+            student_answer = q_result.get("student_answer", "Not answered")
+            correct_answer = q_result.get("correct_answer", "")
+            is_correct = q_result.get("is_correct", False)
+            marks = q_result.get("marks", 0)
+            marks_obtained = q_result.get("marks_obtained", 0)
+
+            icon = "✅" if is_correct else "❌" if student_answer != "Not answered" else "⚠️"
+            card_class = "border-success" if is_correct else "border-danger" if student_answer != "Not answered" else "border-warning"
+
+            mcq_results_html += f"""
+            <div class="card mb-3 {card_class}">
+                <div class="card-header">
+                    <strong>Question {q_no}</strong> {icon}
+                    <span class="float-end badge bg-secondary">{marks_obtained}/{marks} marks</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>{html.escape(question_text)}</strong></p>
+                    <div class="mt-2">
+                        <div><strong>Student Answer:</strong> <span class="{'text-success' if is_correct else 'text-danger'}">{html.escape(student_answer)}</span></div>
+                        <div><strong>Correct Answer:</strong> <span class="text-success">{html.escape(correct_answer)}</span></div>
+                    </div>
+                </div>
+            </div>
+            """
+
+    # Build Short Answer results
+    sa_results_html = ""
+    sa_questions = submission.get("short_answer_questions", [])
+    sa_grades = submission.get("short_answer_grades", {})
+
+    if sa_questions:
+        sa_results_html += '<h4 class="mb-3 mt-4">✏️ Short Answer Questions</h4>'
+        
+        for q in sa_questions:
+            q_no = q.get("question_no")
+            question_text = q.get("question_text", "")
+            sample_answer = q.get("sample_answer", "")
+            student_answer = q.get("student_answer", "")
+            max_marks = q.get("max_marks", 0)
+
+            grade_info = sa_grades.get(str(q_no), {})
+            awarded_marks = grade_info.get("marks", 0)
+            feedback = grade_info.get("feedback", "")
+
+            sa_results_html += f"""
+            <div class="card mb-3">
+                <div class="card-header">
+                    <strong>Question {q_no}</strong>
+                    <span class="float-end badge bg-secondary">{awarded_marks}/{max_marks} marks</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>{html.escape(question_text)}</strong></p>
+                    
+                    <div class="mt-3">
+                        <strong>✏️ Student's Answer:</strong>
+                        <div class="p-3 bg-light rounded mt-2">
+                            {html.escape(student_answer) if student_answer else '<em class="text-muted">No answer provided</em>'}
+                        </div>
+                    </div>
+                    
+                    {f'''
+                    <div class="mt-3">
+                        <strong>📚 Sample Answer (Reference):</strong>
+                        <div class="p-3 bg-light rounded mt-2">
+                            {html.escape(sample_answer)}
+                        </div>
+                    </div>
+                    ''' if sample_answer else ''}
+                    
+                    {f'''
+                    <div class="mt-3 alert alert-info">
+                        <strong>💬 Instructor Feedback:</strong>
+                        <p class="mb-0 mt-2">{html.escape(feedback)}</p>
+                    </div>
+                    ''' if feedback else ''}
+                </div>
+            </div>
+            """
+
+    html_str = render(
+        "view_submission_result.html",
+        {
+            "submission_id": submission_id,
+            "exam_id": exam_id,
+            "exam_title": exam.get("title", "") if exam else "",
+            "student_id": student_id,
+            "submitted_time": submitted_time,
+            "message_html": "",
+            "scores_html": scores_html,
+            "mcq_results_html": mcq_results_html,
+            "sa_results_html": sa_results_html,
+        },
+    )
+    return html_str, 200

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Performance Report - {{exam_title}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-bottom: 50px;
+        }
+        
+        .report-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .report-header {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            color: #667eea;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .badge-large {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+        }
+        
+        canvas {
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <span class="navbar-brand">📊 Performance Report: {{exam_title}}</span>
+        <a href="/admin/exam-list" class="btn btn-outline-light btn-sm">← Back to Exam List</a>
+    </div>
+</nav>
+
+<div class="report-container">
+    <!-- Header Summary -->
+    <div class="report-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{exam_title}}</h2>
+                <p class="text-muted mb-0">
+                    <strong>Exam Date:</strong> {{exam_date}} | 
+                    <strong>Total Students:</strong> {{total_students}}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button onclick="window.print()" class="btn btn-primary">
+                    🖨️ Print Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Statistics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value">{{avg_percentage}}%</div>
+                <div class="stat-label">Average Score</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-success">{{pass_rate}}%</div>
+                <div class="stat-label">Pass Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-info">{{highest_score}}%</div>
+                <div class="stat-label">Highest Score</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-value text-warning">{{lowest_score}}%</div>
+                <div class="stat-label">Lowest Score</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-value text-muted" style="font-size: 1.8rem;">{{median_score}}%</div>
+                <div class="stat-label">Median Score</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-value text-muted" style="font-size: 1.8rem;">{{std_dev}}</div>
+                <div class="stat-label">Standard Deviation</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="text-center">
+                    <span class="badge bg-success badge-large">{{passed_count}} Passed</span>
+                    <span class="badge bg-danger badge-large">{{failed_count}} Failed</span>
+                </div>
+                <div class="stat-label">Pass/Fail Distribution</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCQ vs SA Performance -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4 class="section-title">📝 MCQ Performance</h4>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h2 class="text-primary">{{mcq_avg_percentage}}%</h2>
+                        <p class="text-muted">Average Percentage</p>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="text-secondary">{{mcq_avg_score}}/{{mcq_total}}</h2>
+                        <p class="text-muted">Average Score</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h4 class="section-title">✏️ Short Answer Performance</h4>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h2 class="text-primary">{{sa_avg_percentage}}%</h2>
+                        <p class="text-muted">Average Percentage</p>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="text-secondary">{{sa_avg_score}}/{{sa_total}}</h2>
+                        <p class="text-muted">Average Score</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Performance Details -->
+    <div class="table-container">
+        <h4 class="section-title">📊 Question-by-Question Analysis</h4>
+        {% if question_perf_html %}
+            {{question_perf_html|safe}}
+        {% else %}
+            <p class="text-muted">No question performance data available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Top Performers -->
+    <div class="table-container">
+        <h4 class="section-title">🏆 Top Performers</h4>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student ID</th>
+                        <th>Percentage</th>
+                        <th>Total Marks</th>
+                        <th>MCQ Score</th>
+                        <th>SA Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if top_performers_html %}
+                        {{top_performers_html|safe}}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No top performers data available.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Students at Risk -->
+    <div class="table-container">
+        <h4 class="section-title">⚠️ Students Needing Support</h4>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Percentage</th>
+                        <th>Total Marks</th>
+                        <th>Areas of Concern</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if at_risk_html %}
+                        {{at_risk_html|safe}}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">No at-risk students identified.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -15,7 +15,6 @@ from services.exam_service import (
 from .template_engine import render
 from core.firebase_db import db
 
-
 def _parse_form(body: str) -> dict:
     """Parse form data from POST request"""
     data = parse_qs(body)
@@ -200,30 +199,35 @@ def get_admin_exam_list():
                     <p class="exam-desc">{description}</p>
 
                     <div class="exam-meta">
-                        <span> Exam: {exam_date}</span>
-                        <span> {start_time} - {end_time}</span>
-                        <span> {duration} mins</span>
+                        <span>📅 Exam: {exam_date}</span>
+                        <span>🕐 {start_time} - {end_time}</span>
+                        <span>⏱️ {duration} mins</span>
                         <span class="exam-id">ID: {e_id}</span>
                     </div>
 
                     <div class="exam-meta mt-2 p-2 bg-light rounded">
-                        <div><strong> Grading Deadline:</strong> {grading_display}</div>
-                        <div class="mt-1"><strong> Result Release:</strong> {release_display}</div>
+                        <div><strong>⏰ Grading Deadline:</strong> {grading_display}</div>
+                        <div class="mt-1"><strong>📅 Result Release:</strong> {release_display}</div>
                     </div>
                 </div>
 
                 <div class="exam-actions d-flex flex-column gap-2">
                     <a href="/admin/grading-settings?exam_id={e_id}"
                        class="btn btn-sm btn-primary">
-                       Settings
+                       ⚙️ Settings
                     </a>
 
                     {grade_button_html}
+                    
+                    <a href="/admin/performance-report?exam_id={e_id}"
+                       class="btn btn-sm btn-info">
+                       📊 Performance Report
+                    </a>
 
                     {"" if is_finalized else f'''
                     <a href="/admin/finalize-exam?exam_id={e_id}"
                        class="btn btn-sm btn-warning">
-                       Finalize Results
+                       🔒 Finalize Results
                     </a>
                     '''}
                 </div>
