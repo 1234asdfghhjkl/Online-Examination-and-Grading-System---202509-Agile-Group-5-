@@ -37,8 +37,9 @@ def _build_questions_html(exam_id: str) -> str:
 
     # MCQ Questions
     if mcq_questions:
+        # UPDATED: Changed color from #667eea to #3b82f6
         html_parts.append(
-            '<h4 class="mb-4" style="color: #667eea; font-weight: 700;">📝 Multiple Choice Questions</h4>'
+            '<h4 class="mb-4" style="color: #3b82f6; font-weight: 700;">📝 Multiple Choice Questions</h4>'
         )
 
         for idx, q in enumerate(mcq_questions, start=1):
@@ -89,8 +90,9 @@ def _build_questions_html(exam_id: str) -> str:
 
     # Short Answer Questions
     if sa_questions:
+        # UPDATED: Changed color from #667eea to #3b82f6
         html_parts.append(
-            '<h4 class="mb-4 mt-5" style="color: #667eea; font-weight: 700;">✏️ Short Answer Questions</h4>'
+            '<h4 class="mb-4 mt-5" style="color: #3b82f6; font-weight: 700;">✏️ Short Answer Questions</h4>'
         )
 
         for idx, q in enumerate(sa_questions, start=1):
@@ -207,7 +209,7 @@ def get_student_dashboard(student_id: str):
 
             exam_list_html += f"""
             <div class="col-md-6 mb-4">
-                <div class="card h-100 shadow-sm border-0">
+                <div class="card h-100 shadow-sm border-0" style="border-top: 4px solid #3b82f6 !important;">
                     <div class="card-body">
                         <h5 class="card-title fw-bold text-primary">{title}</h5>
                         <div class="text-muted small mb-3">
@@ -215,7 +217,7 @@ def get_student_dashboard(student_id: str):
                             <div>⏱️ Duration: {duration} mins</div>
                         </div>
                         <a href="/student-exam?exam_id={e_id}&student_id={current_student_id}" 
-                           class="btn btn-outline-primary w-100">
+                           class="btn btn-primary w-100">
                            Take Exam
                         </a>
                     </div>
@@ -639,7 +641,7 @@ def get_exam_result(exam_id: str, student_id: str):
     sa_grades = submission.get("short_answer_graded_questions", [])
     if sa_grades:
         questions_review_html += (
-            '<h4 class="mb-4 mt-5" style="color: #667eea;">✏️ Short Answer Results</h4>'
+            '<h4 class="mb-4 mt-5" style="color: #3b82f6;">✏️ Short Answer Results</h4>'
         )
 
         for sa in sa_grades:

@@ -11,7 +11,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* CHANGE: Light Gray Background */
+            background-color: #f3f4f6;
             min-height: 100vh;
             padding: 2rem 0;
         }
@@ -19,14 +20,15 @@
         .card-main {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             overflow: hidden;
             max-width: 1000px;
             margin: 0 auto;
         }
 
         .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* CHANGE: Blue Gradient */
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
             padding: 2rem;
             border: none;
@@ -41,118 +43,45 @@
             padding: 2.5rem;
         }
 
-        .stepper {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2.5rem;
-            padding: 0 1rem;
-        }
-
-        .stepper-item {
-            flex: 1;
-            text-align: center;
-            position: relative;
-        }
-
-        .step-circle {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #e5e7eb;
-            color: #6b7280;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin: 0 auto 0.5rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .step-circle.current {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .stepper-item .step-circle.current {
+            /* CHANGE: Blue Gradient */
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
         }
 
-        .step-circle.done {
-            background: #10b981;
+        .stepper-item .step-circle.done {
+            background: #10b981; /* Keep Green for done */
             color: white;
         }
 
-        .step-circle.next {
-            background: #e5e7eb;
-            color: #9ca3af;
-        }
-
-        .step-label {
-            display: block;
-            font-weight: 600;
-            color: #1f2937;
-            font-size: 0.9rem;
-        }
-
-        .step-caption {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-top: 0.25rem;
-        }
-
-        .stepper-item:not(:last-child) .step-circle::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: calc(50% + 25px);
-            width: calc(100% - 50px);
-            height: 2px;
-            background: #e5e7eb;
-            z-index: 1;
-        }
-
-        .stepper-item .step-circle.current::after,
-        .stepper-item .step-circle.done::after {
-            background: linear-gradient(90deg, #10b981, #667eea);
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-control,
-        .form-select {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 0.75rem;
-            transition: all 0.3s ease;
+        .stepper-item .step-circle.current::after {
+            /* CHANGE: Blue Gradient */
+            background: linear-gradient(90deg, #10b981, #3b82f6);
         }
 
         .form-control:focus,
         .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        textarea.form-control {
-            min-height: 100px;
+            /* CHANGE: Blue Focus */
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            /* CHANGE: Blue Gradient */
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             border: none;
             padding: 0.875rem 2.5rem;
             border-radius: 50px;
             font-weight: 600;
             font-size: 1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 25px rgba(59, 130, 246, 0.4);
         }
 
         .filter-section {
@@ -220,8 +149,8 @@
         }
 
         .form-check-input:checked {
-            background-color: #667eea;
-            border-color: #667eea;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
         }
 
         .form-check-input:disabled~.form-check-label {
@@ -277,7 +206,7 @@
 
         .loading-spinner {
             border: 3px solid #f3f4f6;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
             width: 30px;
             height: 30px;

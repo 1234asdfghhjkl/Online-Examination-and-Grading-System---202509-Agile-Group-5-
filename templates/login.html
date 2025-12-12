@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +9,8 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* CHANGE: Clean light gray background instead of purple gradient */
+            background-color: #f3f4f6;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -20,7 +20,7 @@
         .login-container {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             max-width: 900px;
             width: 100%;
@@ -29,7 +29,8 @@
 
         .login-left {
             flex: 1;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* CHANGE: Blue gradient */
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             padding: 60px 40px;
             display: flex;
@@ -58,35 +59,42 @@
             transition: all 0.3s ease;
             font-weight: 600;
             text-align: center;
+            color: #4b5563;
         }
 
         .role-btn:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #3b82f6;
         }
 
         .role-btn.active {
-            border-color: #667eea;
-            background: #667eea;
+            /* CHANGE: Solid Blue */
+            border-color: #3b82f6;
+            background: #3b82f6;
             color: white;
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            /* CHANGE: Blue Focus */
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
         }
 
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /* CHANGE: Blue Gradient */
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border: none;
             padding: 12px;
             font-weight: 600;
             transition: transform 0.2s ease;
+            color: white;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            color: white;
         }
 
         .feature-item {
@@ -111,17 +119,14 @@
             .login-container {
                 flex-direction: column;
             }
-
             .login-left {
                 padding: 40px 30px;
             }
         }
     </style>
 </head>
-
 <body>
     <div class="login-container">
-        <!-- Left Side: Branding -->
         <div class="login-left">
             <h1 class="mb-4">📚 Online Exam System</h1>
             <p class="mb-5">Streamline your examination process with our comprehensive platform</p>
@@ -151,14 +156,12 @@
             </div>
         </div>
 
-        <!-- Right Side: Login Form -->
         <div class="login-right">
             <h3 class="mb-2 fw-bold">Welcome Back!</h3>
             <p class="text-muted mb-4">Sign in to continue to your account</p>
 
             {{errors_html}}
 
-            <!-- Role Selector -->
             <div class="role-selector">
                 <div class="role-btn active" data-role="student" onclick="selectRole('student')">
                     🎓 Student
@@ -171,7 +174,6 @@
                 </div>
             </div>
 
-            <!-- Login Form -->
             <form method="POST" action="/login">
                 <input type="hidden" name="role" id="role" value="student">
 
@@ -203,16 +205,12 @@
 
     <script>
         function selectRole(role) {
-            // Update UI
             document.querySelectorAll('.role-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.querySelector(`[data-role="${role}"]`).classList.add('active');
-
-            // Update hidden input
             document.getElementById('role').value = role;
 
-            // Update placeholder text for user_id field
             const userInput = document.getElementById('user_id');
             if (role === 'student') {
                 userInput.placeholder = "Enter your Student ID (e.g., 100123)";
@@ -222,10 +220,7 @@
                 userInput.placeholder = "Enter 'admin' or admin@system.com";
             }
         }
-
-        // Initialize with student role
         selectRole('student');
     </script>
 </body>
-
 </html>
