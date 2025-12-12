@@ -1,5 +1,6 @@
 from urllib.parse import parse_qs
 import html
+import json
 from datetime import datetime
 from typing import Optional
 from services.user_service import parse_excel_data, bulk_create_users
@@ -10,7 +11,7 @@ from services.exam_service import (
     set_result_release_date,
     save_grading_settings,
 )
-from .template_engine import render
+from web.template_engine import render
 from core.firebase_db import db
 
 
@@ -734,20 +735,102 @@ def post_import_accounts(
         return render("admin_account_import.html", ctx), 400
 
 
+# ------- Deactivate student / lecturer account ---------
+def deactivate_student_handler(request_body_json):
+    try:
+        student_id = request_body_json.get("student_id")
+
+        if not student_id:
+            return (
+                json.dumps({"success": False, "message": "Student ID is required"}),
+                400,
+            )
+
+        users_ref = db.collection("users")
+        query = users_ref.where("student_id", "==", student_id).limit(1)
+        docs = list(query.stream())
+
+        if not docs:
+            return (
+                json.dumps(
+                    {"success": False, "message": f"Student {student_id} not found"}
+                ),
+                404,
+            )
+
+        doc_ref = docs[0].reference
+        doc_ref.update({"is_active": False, "status": "inactive"})
+
+        return (
+            json.dumps(
+                {
+                    "success": True,
+                    "message": f"Student {student_id} has been deactivated successfully.",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        print(f"Error deactivating student: {e}")
+        return json.dumps({"success": False, "message": "Server Error"}), 500
+
+
+def deactivate_lecturer_handler(request_body_json):
+    try:
+        lecturer_id = request_body_json.get("lecturer_id")
+
+        if not lecturer_id:
+            return (
+                json.dumps({"success": False, "message": "Lecturer ID is required"}),
+                400,
+            )
+
+        users_ref = db.collection("users")
+        query = users_ref.where("lecturer_id", "==", lecturer_id).limit(1)
+        docs = list(query.stream())
+
+        if not docs:
+            return (
+                json.dumps(
+                    {"success": False, "message": f"Lecturer {lecturer_id} not found"}
+                ),
+                404,
+            )
+
+        doc_ref = docs[0].reference
+        doc_ref.update({"is_active": False, "status": "inactive"})
+
+        return (
+            json.dumps(
+                {
+                    "success": True,
+                    "message": f"Lecturer {lecturer_id} has been deactivated successfully.",
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        print(f"Error deactivating lecturer: {e}")
+        return json.dumps({"success": False, "message": "Server Error"}), 500
+
+
 def get_admin_student_list():
     """
     GET handler for the Admin Student List page.
-    Fetches all users with role='student' from Firestore.
+    Fetches all users with role='student' from Firestore with Active/Inactive status.
+    FIX: Separated Name and Email into distinct columns to match table headers.
     """
     try:
         # Fetch all students
-        # Note: In a real production app with thousands of users, you would use pagination (limit/offset).
-        # For this prototype, fetching all is acceptable.
         students_ref = db.collection("users").where("role", "==", "student").stream()
 
         students = []
         for doc in students_ref:
             s = doc.to_dict()
+            is_active = s.get("is_active", True)
+
             students.append(
                 {
                     "student_id": s.get("student_id", "N/A"),
@@ -757,27 +840,49 @@ def get_admin_student_list():
                     "year": s.get("year", "-"),
                     "semester": s.get("semester", "-"),
                     "ic": s.get("ic", "N/A"),
+                    "is_active": is_active,
                 }
             )
 
         # Sort by Student ID
         students.sort(key=lambda x: x["student_id"])
 
-        # Generate HTML rows
         rows_html = ""
         if not students:
             rows_html = '<tr><td colspan="6" class="text-center text-muted">No students found. Import accounts to get started.</td></tr>'
         else:
             for s in students:
+
+                # Check if Active (default to True)
+                is_active = s.get("is_active", True)
+                if is_active:
+                    row_class = ""
+                    status_badge = '<span class="badge bg-success ms-2">Active</span>'
+                    btn_text = "Deactivate"
+                    btn_class = "btn-outline-danger"
+                    btn_action = f"toggleRowStatus('{s['student_id']}', 'deactivate')"
+                else:
+                    row_class = "table-secondary text-muted"
+                    status_badge = (
+                        '<span class="badge bg-secondary ms-2">Inactive</span>'
+                    )
+                    btn_text = "Reactivate"
+                    btn_class = "btn-success"
+                    btn_action = f"toggleRowStatus('{s['student_id']}', 'reactivate')"
+
                 rows_html += f"""
-                <tr>
-                    <td><span class="fw-bold">{html.escape(str(s['student_id']))}</span></td>
+                <tr id="student-row-{s['student_id']}" class="{row_class}">
+                    <td>
+                        <span class="fw-bold">{html.escape(str(s['student_id']))}</span>
+                        {status_badge}
+                    </td>
                     <td>{html.escape(str(s['name']))}</td>
                     <td>{html.escape(str(s['email']))}</td>
                     <td>{html.escape(str(s['major']))}</td>
                     <td>Y{s['year']} S{s['semester']}</td>
                     <td>
-                        <a href="/profile?user_id={s['student_id']}" class="btn btn-sm btn-outline-primary">View</a>
+                        <a href="/profile?user_id={s['student_id']}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                        <button class="btn btn-sm {btn_class}" onclick="{btn_action}">{btn_text}</button>
                     </td>
                 </tr>
                 """
@@ -786,11 +891,98 @@ def get_admin_student_list():
         return render("admin_student_list.html", ctx), 200
 
     except Exception as e:
-        # Fallback error page
         error_html = f"""
         <div class="container mt-5">
             <div class="alert alert-danger">
                 <h4>Error Fetching Students</h4>
+                <p>{str(e)}</p>
+                <a href="/admin/dashboard" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+        """
+        return error_html, 500
+
+
+def get_admin_lecturer_list():
+    """
+    GET handler for the Admin Lecturer List page.
+    Fetches all users with role='lecturer' from Firestore.
+    """
+    try:
+        # Fetch all lecturers
+        lecturers_ref = db.collection("users").where("role", "==", "lecturer").stream()
+
+        lecturers = []
+        for doc in lecturers_ref:
+            lecturer_data = doc.to_dict()
+
+            # Check active status
+            is_active = lecturer_data.get("is_active", True)
+
+            lecturers.append(
+                {
+                    "lecturer_id": lecturer_data.get("lecturer_id", "N/A"),
+                    "name": lecturer_data.get("name", "N/A"),
+                    "email": lecturer_data.get("email", "N/A"),
+                    "faculty": lecturer_data.get("faculty", "N/A"),
+                    "ic": lecturer_data.get("ic", "N/A"),
+                    "is_active": is_active,
+                }
+            )
+
+        # Sort by Lecturer ID
+        lecturers.sort(key=lambda x: x["lecturer_id"])
+
+        # Generate HTML rows
+        rows_html = ""
+        if not lecturers:
+            rows_html = '<tr><td colspan="6" class="text-center text-muted">No lecturers found. Import accounts to get started.</td></tr>'
+        else:
+            for lecturer in lecturers:
+
+                is_active = lecturer.get("is_active", True)
+
+                if is_active:
+                    row_class = ""
+                    status_badge = '<span class="badge bg-success ms-2">Active</span>'
+
+                    btn_text = "Deactivate"
+                    btn_class = "btn-outline-danger"
+                    btn_action = f"deactivateLecturer('{lecturer['lecturer_id']}')"
+                else:
+                    row_class = "table-secondary text-muted"
+                    status_badge = (
+                        '<span class="badge bg-secondary ms-2">Inactive</span>'
+                    )
+
+                    btn_text = "Reactivate"
+                    btn_class = "btn-success"
+                    btn_action = f"reactivateLecturer('{lecturer['lecturer_id']}')"
+
+                rows_html += f"""
+                <tr id="lecturer-row-{lecturer['lecturer_id']}" class="{row_class}">
+                    <td>
+                        <span class="fw-bold">{html.escape(str(lecturer['lecturer_id']))}</span>
+                        {status_badge}
+                    </td>
+                    <td>{html.escape(str(lecturer['name']))}</td>
+                    <td>{html.escape(str(lecturer['email']))}</td>
+                    <td>{html.escape(str(lecturer['faculty']))}</td>
+                    <td>
+                        <a href="/profile?user_id={lecturer['lecturer_id']}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                        <button class="btn btn-sm {btn_class}" onclick="{btn_action}">{btn_text}</button>
+                    </td>
+                </tr>
+                """
+
+        ctx = {"lecturer_rows_html": rows_html, "total_count": len(lecturers)}
+        return render("admin_lecturer_list.html", ctx), 200
+
+    except Exception as e:
+        error_html = f"""
+        <div class="container mt-5">
+            <div class="alert alert-danger">
+                <h4>Error Fetching Lecturers</h4>
                 <p>{str(e)}</p>
                 <a href="/admin/exam-list" class="btn btn-secondary">Back</a>
             </div>

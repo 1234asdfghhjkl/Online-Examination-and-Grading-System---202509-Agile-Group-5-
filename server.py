@@ -1,4 +1,5 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from firebase_admin import firestore
 import os
 
 # Replaced 'cgi' with 'email' library for Python 3.13+ compatibility
@@ -19,12 +20,19 @@ from web.admin_routes import (
     get_account_import_page,
     post_import_accounts,
     get_admin_student_list,
+    get_admin_lecturer_list,
 )
 
 from web.template_engine import STATIC_DIR
 from web import exams, mcq, tc_reports, short_answer, student_exam, password_routes
 from web.student_result_routes import get_student_result_view
 from web.student_result_routes import get_student_result_pdf
+from services.deactivate_service import (
+    deactivate_lecturer_by_id,
+    reactivate_lecturer_by_id,
+    deactivate_student_by_id,
+    reactivate_student_by_id,
+)
 
 # ADDED: Import for student_filter_service
 from services.student_filter_service import (
@@ -48,8 +56,11 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _send_json(self, json_str: str, status: int = 200):
-        data = json_str.encode("utf-8")
+    def _send_json(self, obj, status: int = 200):
+        if isinstance(obj, dict):
+            data = json.dumps(obj).encode("utf-8")
+        else:
+            data = str(obj).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
@@ -128,6 +139,8 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         path = parsed.path
         query = parse_qs(parsed.query)
+        query_components = parse_qs(urlparse(self.path).query)
+        db_client = firestore.client()
 
         # ========================================
         # LOGIN / ROOT ROUTE
@@ -233,6 +246,30 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/admin/student-list":
             html_str, status = get_admin_student_list()
             self._send_html(html_str, status)
+
+        elif path == "/admin/lecturer-list":
+            html_str, status = get_admin_lecturer_list()
+            self._send_html(html_str, status)
+
+        elif path.startswith("/admin/deactivate-lecturer"):
+            lecturer_id = query_components.get("id", [None])[0]
+            result = deactivate_lecturer_by_id(lecturer_id, db_client)
+            self._send_json(result)
+
+        elif path.startswith("/admin/reactivate-lecturer"):
+            lecturer_id = query_components.get("id", [None])[0]
+            result = reactivate_lecturer_by_id(lecturer_id, db_client)
+            self._send_json(result)
+
+        elif path.startswith("/admin/deactivate-student"):
+            student_id = query_components.get("id", [None])[0]
+            result = deactivate_student_by_id(student_id, db_client)
+            self._send_json(result)
+
+        elif path.startswith("/admin/reactivate-student"):
+            student_id = query_components.get("id", [None])[0]
+            result = reactivate_student_by_id(student_id, db_client)
+            self._send_json(result)
 
         # ------------------------------
         # EXAM BUILDER ROUTES
