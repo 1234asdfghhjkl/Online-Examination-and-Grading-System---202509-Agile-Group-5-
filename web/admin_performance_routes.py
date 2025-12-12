@@ -119,7 +119,6 @@ def get_performance_report(exam_id: str):
     mcq_stats = report.get("mcq_stats", {})
     sa_stats = report.get("sa_stats", {})
     grade_distribution = report.get("grade_distribution", {})
-    question_performance = report.get("question_performance", {})
     top_performers = report.get("top_performers", [])
     students_at_risk = report.get("students_at_risk", [])
 
@@ -139,9 +138,6 @@ def get_performance_report(exam_id: str):
         "F": "#dc3545",  # Red
     }
 
-    # Check if grade_distribution has data
-    print(f"🔍 DEBUG - grade_distribution: {grade_distribution}")
-
     # FIXED: Always include all grades A-F, even if count is 0
     for grade in ["A", "B", "C", "D", "F"]:
         grade_labels.append(f"Grade {grade}")
@@ -154,87 +150,10 @@ def get_performance_report(exam_id: str):
         else:
             grade_counts.append(0)
 
-    print(f"📊 Chart Data - Grade labels: {grade_labels}")
-    print(f"📊 Chart Data - Grade counts: {grade_counts}")
-
-    # Build question performance data for chart
-    question_labels = []
-    question_success = []
-
-    print(f"🔍 DEBUG - question_performance: {question_performance}")
-
-    for q_key in sorted(question_performance.keys()):
-        q_data = question_performance[q_key]
-        question_labels.append(q_key)
-        question_success.append(q_data.get("success_rate", 0))
-
-    print(f"🎯 Chart Data - Question labels: {question_labels}")
-    print(f"🎯 Chart Data - Question success: {question_success}")
-
     # Convert to JSON strings - ALWAYS create valid JSON arrays
     grade_labels_json = json.dumps(grade_labels)
     grade_counts_json = json.dumps(grade_counts)
     grade_colors_json = json.dumps(grade_colors)
-    question_labels_json = json.dumps(question_labels) if question_labels else "[]"
-    question_success_json = json.dumps(question_success) if question_success else "[]"
-
-    print(f"✅ Final JSON - grade_labels_json: {grade_labels_json}")
-    print(f"✅ Final JSON - grade_counts_json: {grade_counts_json}")
-    print(f"✅ Final JSON - question_labels_json: {question_labels_json}")
-
-    # ==========================================
-    # FIX: Build question performance table HTML
-    # ==========================================
-    question_perf_html = ""
-    if question_performance:
-        question_perf_html = """
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Question</th>
-                        <th>Question Text</th>
-                        <th>Correct</th>
-                        <th>Incorrect</th>
-                        <th>Unanswered</th>
-                        <th>Success Rate</th>
-                    </tr>
-                </thead>
-                <tbody>
-        """
-
-        for q_key in sorted(question_performance.keys()):
-            q_data = question_performance[q_key]
-            success_rate = q_data.get("success_rate", 0)
-
-            # Color code success rate
-            if success_rate >= 80:
-                badge_class = "bg-success"
-            elif success_rate >= 60:
-                badge_class = "bg-info"
-            elif success_rate >= 40:
-                badge_class = "bg-warning text-dark"
-            else:
-                badge_class = "bg-danger"
-
-            question_perf_html += f"""
-                <tr>
-                    <td><strong>{html.escape(q_key)}</strong></td>
-                    <td>{html.escape(q_data.get('question_text', 'N/A'))}</td>
-                    <td><span class="badge bg-success">{q_data.get('correct', 0)}</span></td>
-                    <td><span class="badge bg-danger">{q_data.get('incorrect', 0)}</span></td>
-                    <td><span class="badge bg-secondary">{q_data.get('unanswered', 0)}</span></td>
-                    <td><span class="badge {badge_class}">{success_rate}%</span></td>
-                </tr>
-            """
-
-        question_perf_html += """
-                </tbody>
-            </table>
-        </div>
-        """
-    else:
-        question_perf_html = '<p class="text-center text-muted py-4">No question performance data available.</p>'
 
     # ==========================================
     # FIX: Build top performers table HTML
@@ -281,14 +200,6 @@ def get_performance_report(exam_id: str):
     else:
         at_risk_html = '<tr><td colspan="4" class="text-center text-muted py-4">No at-risk students identified.</td></tr>'
 
-    # ==========================================
-    # DEBUG: Print what we're sending (optional)
-    # ==========================================
-    print(f"📋 DEBUG - question_perf_html length: {len(question_perf_html)}")
-    print(f"📋 DEBUG - top_performers count: {len(top_performers)}")
-    print(f"📋 DEBUG - at_risk count: {len(students_at_risk)}")
-    print(f"📋 DEBUG - question_performance keys: {list(question_performance.keys())}")
-
     # Prepare context for template
     context = {
         "exam_id": exam_id,
@@ -328,10 +239,7 @@ def get_performance_report(exam_id: str):
         "grade_labels_json": grade_labels_json,
         "grade_counts_json": grade_counts_json,
         "grade_colors_json": grade_colors_json,
-        "question_labels_json": question_labels_json,
-        "question_success_json": question_success_json,
-        # HTML tables - NOW PROPERLY POPULATED
-        "question_perf_html": question_perf_html,
+        # HTML tables
         "top_performers_html": top_performers_html,
         "at_risk_html": at_risk_html,
     }
