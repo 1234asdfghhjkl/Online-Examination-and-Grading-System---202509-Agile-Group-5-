@@ -116,7 +116,7 @@ def save_grading_result(submission_id: str, grading_result: Dict) -> None:
     doc_ref = db.collection("submissions").document(submission_id)
     
     # 🐛 DEBUG: Print what we're saving
-    print(f"🔍 DEBUG - Saving MCQ results:")
+    print("🔍 DEBUG - Saving MCQ results:")
     print(f"  - obtained_marks: {grading_result['obtained_marks']}")
     print(f"  - total_marks: {grading_result['total_marks']}")
     print(f"  - percentage: {grading_result['percentage']}")
@@ -141,7 +141,7 @@ def save_grading_result(submission_id: str, grading_result: Dict) -> None:
     saved_doc = doc_ref.get()
     if saved_doc.exists:
         saved_data = saved_doc.to_dict()
-        print(f"✅ DEBUG - Verified saved data:")
+        print("✅ DEBUG - Verified saved data:")
         print(f"  - mcq_score: {saved_data.get('mcq_score')}")
         print(f"  - mcq_total: {saved_data.get('mcq_total')}")
 

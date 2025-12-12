@@ -82,14 +82,14 @@ def fix_all_submissions():
             doc.reference.update(update_data)
             fixed_count += 1
             
-            print(f"   ✅ FIXED!")
+            print("   ✅ FIXED!")
             print(f"   New mcq_score: {correct_obtained}")
             print(f"   New overall_percentage: {round(overall_percentage, 2)}%")
         else:
             print(f"✓ Submission {submission_id}: OK")
     
     print(f"\n{'='*60}")
-    print(f"📊 Summary:")
+    print("📊 Summary:")
     print(f"   Total submissions checked: {checked_count}")
     print(f"   Submissions fixed: {fixed_count}")
     print(f"   Submissions OK: {checked_count - fixed_count}")
@@ -116,7 +116,7 @@ def fix_specific_submission(submission_id: str):
     grading_result = data.get("grading_result", {})
     
     if not grading_result:
-        print(f"❌ No grading result found for this submission!")
+        print("❌ No grading result found for this submission!")
         return
     
     # Get correct values
@@ -134,12 +134,12 @@ def fix_specific_submission(submission_id: str):
         (overall_obtained / overall_total * 100) if overall_total > 0 else 0
     )
     
-    print(f"\n📋 Current values:")
+    print("\n📋 Current values:")
     print(f"   mcq_score: {data.get('mcq_score')}")
     print(f"   mcq_total: {data.get('mcq_total')}")
     print(f"   overall_percentage: {data.get('overall_percentage')}%")
     
-    print(f"\n✅ Correct values (from grading_result):")
+    print("\n✅ Correct values (from grading_result):")
     print(f"   mcq_score: {correct_obtained}")
     print(f"   mcq_total: {correct_total}")
     print(f"   overall_percentage: {round(overall_percentage, 2)}%")
