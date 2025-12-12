@@ -194,12 +194,12 @@ def get_grade_short_answers(submission_id: str):
     GET handler for grading short answers for a specific submission
     """
     if not submission_id:
-        # ... [Keep existing error handling] ...
+     
         return "Missing submission ID", 400
 
     submission = get_submission_with_questions(submission_id)
     if not submission:
-        # ... [Keep existing error handling] ...
+   
         return "Submission not found", 404
 
     exam_id = submission.get("exam_id")
@@ -316,6 +316,7 @@ def get_grade_short_answers(submission_id: str):
             "sa_total": sa_total,
             "message_html": message_html,
             "questions_html": questions_html,
+            
         },
     )
 
