@@ -22,7 +22,7 @@ from web.admin_routes import (
 )
 
 from web.template_engine import STATIC_DIR
-from web import exams, mcq, short_answer, student_exam, password_routes
+from web import exams, mcq, tc_reports, short_answer, student_exam, password_routes
 from web.student_result_routes import get_student_result_view
 from web.student_result_routes import get_student_result_pdf
 
@@ -167,6 +167,10 @@ class Handler(BaseHTTPRequestHandler):
             exam_id = query.get("exam_id", [""])[0]
             method = query.get("method", ["hard"])[0]
             html_str, status = exams.get_exam_delete(exam_id, method)
+            self._send_html(html_str, status)
+
+        elif path == "/exam-report":
+            html_str, status = tc_reports.get_exam_results_summary_report(query)
             self._send_html(html_str, status)
 
         elif path == "/exam-list":
