@@ -80,3 +80,7 @@ def post_login(body: str):
         }
         html_str = render("login.html", ctx)
         return html_str, 500, None
+
+
+def get_logout():
+    return None, 302, "/login"
