@@ -914,18 +914,18 @@ def get_admin_lecturer_list():
 
         lecturers = []
         for doc in lecturers_ref:
-            l = doc.to_dict()
+            lecturer_data = doc.to_dict()
 
-            # Check active status (Default to True if field is missing)
-            is_active = l.get("is_active", True)
+            # Check active status
+            is_active = lecturer_data.get("is_active", True)
 
             lecturers.append(
                 {
-                    "lecturer_id": l.get("lecturer_id", "N/A"),
-                    "name": l.get("name", "N/A"),
-                    "email": l.get("email", "N/A"),
-                    "faculty": l.get("faculty", "N/A"),
-                    "ic": l.get("ic", "N/A"),
+                    "lecturer_id": lecturer_data.get("lecturer_id", "N/A"),
+                    "name": lecturer_data.get("name", "N/A"),
+                    "email": lecturer_data.get("email", "N/A"),
+                    "faculty": lecturer_data.get("faculty", "N/A"),
+                    "ic": lecturer_data.get("ic", "N/A"),
                     "is_active": is_active,
                 }
             )
@@ -938,9 +938,9 @@ def get_admin_lecturer_list():
         if not lecturers:
             rows_html = '<tr><td colspan="6" class="text-center text-muted">No lecturers found. Import accounts to get started.</td></tr>'
         else:
-            for l in lecturers:
+            for lecturer in lecturers:
 
-                is_active = l.get("is_active", True)
+                is_active = lecturer.get("is_active", True)
 
                 if is_active:
                     row_class = ""
@@ -948,7 +948,7 @@ def get_admin_lecturer_list():
 
                     btn_text = "Deactivate"
                     btn_class = "btn-outline-danger"
-                    btn_action = f"deactivateLecturer('{l['lecturer_id']}')"
+                    btn_action = f"deactivateLecturer('{lecturer['lecturer_id']}')"
                 else:
                     row_class = "table-secondary text-muted"
                     status_badge = (
@@ -957,19 +957,19 @@ def get_admin_lecturer_list():
 
                     btn_text = "Reactivate"
                     btn_class = "btn-success"
-                    btn_action = f"reactivateLecturer('{l['lecturer_id']}')"
+                    btn_action = f"reactivateLecturer('{lecturer['lecturer_id']}')"
 
                 rows_html += f"""
-                <tr id="lecturer-row-{l['lecturer_id']}" class="{row_class}">
+                <tr id="lecturer-row-{lecturer['lecturer_id']}" class="{row_class}">
                     <td>
-                        <span class="fw-bold">{html.escape(str(l['lecturer_id']))}</span>
+                        <span class="fw-bold">{html.escape(str(lecturer['lecturer_id']))}</span>
                         {status_badge}
                     </td>
-                    <td>{html.escape(str(l['name']))}</td>
-                    <td>{html.escape(str(l['email']))}</td>
-                    <td>{html.escape(str(l['faculty']))}</td>
+                    <td>{html.escape(str(lecturer['name']))}</td>
+                    <td>{html.escape(str(lecturer['email']))}</td>
+                    <td>{html.escape(str(lecturer['faculty']))}</td>
                     <td>
-                        <a href="/profile?user_id={l['lecturer_id']}" class="btn btn-sm btn-outline-primary me-1">View</a>
+                        <a href="/profile?user_id={lecturer['lecturer_id']}" class="btn btn-sm btn-outline-primary me-1">View</a>
                         <button class="btn btn-sm {btn_class}" onclick="{btn_action}">{btn_text}</button>
                     </td>
                 </tr>
