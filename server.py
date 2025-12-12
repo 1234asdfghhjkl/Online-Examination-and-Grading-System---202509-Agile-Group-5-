@@ -149,6 +149,15 @@ class Handler(BaseHTTPRequestHandler):
             html_str, status = get_login_page()
             self._send_html(html_str, status)
 
+    # ========================================
+        # LOGOUT ROUTE (NEW)
+        # ========================================
+        elif path == "/logout":
+            # Redirect to login page
+            self.send_response(302)
+            self.send_header("Location", "/login")
+            self.end_headers()
+            return
         # ========================================
         # PROFILE ROUTE (NEW)
         # ========================================

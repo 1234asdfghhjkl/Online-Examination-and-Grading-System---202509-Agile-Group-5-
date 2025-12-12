@@ -105,20 +105,45 @@ def grade_mcq_submission(exam_id: str, student_id: str, answers: Dict) -> Dict:
 def save_grading_result(submission_id: str, grading_result: Dict) -> None:
     """
     Save grading results to the submission document
+    
+    🔧 FIXED: Ensures correct field mapping:
+    - mcq_score = obtained marks (what student scored)
+    - mcq_total = total possible marks
     """
     if not submission_id:
         return
 
     doc_ref = db.collection("submissions").document(submission_id)
-    doc_ref.update(
-        {
-            "grading_result": grading_result,
-            "mcq_score": grading_result["obtained_marks"],
-            "mcq_total": grading_result["total_marks"],
-            "mcq_percentage": grading_result["percentage"],
-            "graded_at": datetime.utcnow(),
-        }
-    )
+    
+    # 🐛 DEBUG: Print what we're saving
+    print("🔍 DEBUG - Saving MCQ results:")
+    print(f"  - obtained_marks: {grading_result['obtained_marks']}")
+    print(f"  - total_marks: {grading_result['total_marks']}")
+    print(f"  - percentage: {grading_result['percentage']}")
+    
+    # ✅ CORRECT MAPPING:
+    # mcq_score should be OBTAINED marks, not total marks
+    update_data = {
+        "grading_result": grading_result,
+        "mcq_score": grading_result["obtained_marks"],  # ✅ Student's score
+        "mcq_total": grading_result["total_marks"],     # ✅ Total possible
+        "mcq_percentage": grading_result["percentage"],
+        "graded_at": datetime.utcnow(),
+        # Initialize overall scores (will be updated when SA is graded)
+        "overall_obtained_marks": grading_result["obtained_marks"],
+        "overall_total_marks": grading_result["total_marks"],
+        "overall_percentage": grading_result["percentage"],
+    }
+    
+    doc_ref.update(update_data)
+    
+    # 🐛 DEBUG: Verify what was saved
+    saved_doc = doc_ref.get()
+    if saved_doc.exists:
+        saved_data = saved_doc.to_dict()
+        print("✅ DEBUG - Verified saved data:")
+        print(f"  - mcq_score: {saved_data.get('mcq_score')}")
+        print(f"  - mcq_total: {saved_data.get('mcq_total')}")
 
 
 def get_submission_result(submission_id: str) -> Optional[Dict]:
