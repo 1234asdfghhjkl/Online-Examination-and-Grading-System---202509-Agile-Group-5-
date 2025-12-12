@@ -1,6 +1,6 @@
 # tests/test_tc_reports.py
 import unittest
-from unittest.mock import patch, ANY
+from unittest.mock import patch
 
 import web.tc_reports as tr
 

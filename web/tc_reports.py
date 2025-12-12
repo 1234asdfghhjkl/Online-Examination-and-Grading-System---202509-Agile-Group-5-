@@ -3,10 +3,10 @@ import statistics
 import math
 from typing import Tuple, Dict, Any, List
 from core.firebase_db import db
-from web.template_engine import render  # ok if unused; harmless
 
 
 # ---------------- Basic Firestore helpers ----------------
+
 
 def _get_student_name(student_id: str) -> str:
     """Fetch student name from users collection."""
@@ -32,26 +32,21 @@ def _get_all_exams() -> List[Dict[str, Any]]:
 
 
 def _get_questions_for_exam(exam_doc_id: str) -> List[Dict[str, Any]]:
-    qs = (
-        db.collection("questions")
-        .where("exam_id", "==", exam_doc_id)
-        .stream()
-    )
+    qs = db.collection("questions").where("exam_id", "==", exam_doc_id).stream()
     return [q.to_dict() for q in qs]
 
 
 def _get_submissions_for_exam(exam_doc_id: str) -> List[Dict[str, Any]]:
-    subs = (
-        db.collection("submissions")
-        .where("exam_id", "==", exam_doc_id)
-        .stream()
-    )
+    subs = db.collection("submissions").where("exam_id", "==", exam_doc_id).stream()
     return [s.to_dict() for s in subs]
 
 
 # ---------------- Scoring helpers ----------------
 
-def _get_submission_combined_marks(sub: Dict[str, Any], exam_total_marks: int) -> tuple[float, float]:
+
+def _get_submission_combined_marks(
+    sub: Dict[str, Any], exam_total_marks: int
+) -> tuple[float, float]:
     """
     Returns (obtained_marks, total_marks) for ONE submission,
     combining MCQ + short answer where available.
@@ -203,6 +198,7 @@ def _exam_short_answers_fully_graded(
 
 # ---------------- Page Handler ----------------
 
+
 def get_exam_results_summary_data(query: Dict[str, list]) -> Tuple[str, int]:
     """Return summary for ONE exam as JSON for AJAX requests."""
     selected_exam_id = query.get("exam_id", [""])[0]
@@ -264,6 +260,7 @@ def get_exam_results_summary_data(query: Dict[str, list]) -> Tuple[str, int]:
 
 # ---------------- Full HTML report page ----------------
 
+
 def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
     """
     Render the Exam Results Summary Report page as full HTML.
@@ -272,7 +269,7 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
     """
     # --- parse query params ---
     selected_exam_id = query.get("exam_id", [""])[0]
-    sort_mode = query.get("sort", ["best"])[0] or "best"   # "best" or "worst"
+    sort_mode = query.get("sort", ["best"])[0] or "best"  # "best" or "worst"
     # page param for ranking pagination
     try:
         page = int(query.get("page", ["1"])[0])
@@ -296,7 +293,9 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
         subs = _get_submissions_for_exam(exam_doc_id)
         exam_questions[exam_doc_id] = qs
         exam_submissions[exam_doc_id] = subs
-        exam_reports[exam_doc_id] = _compute_exam_report(e, questions=qs, submissions=subs)
+        exam_reports[exam_doc_id] = _compute_exam_report(
+            e, questions=qs, submissions=subs
+        )
         exam_sa_pending[exam_doc_id] = not _exam_short_answers_fully_graded(qs, subs)
 
     # find selected exam dict
@@ -381,8 +380,8 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
         selected_attr = " selected" if eid == selected_exam_id else ""
         exam_options_html.append(
             f'<option value="{eid}"{selected_attr}>'
-            f'{title} — {exam_code} ({date})'
-            f'</option>'
+            f"{title} — {exam_code} ({date})"
+            f"</option>"
         )
     exam_options_html_str = "\n".join(exam_options_html)
 
@@ -426,7 +425,11 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
         fail_count = report_data.get("fail_count")
         if pass_count is None or fail_count is None:
             attempted = report_data.get("attempted", 0)
-            passes_calc = int(round((report_data["pass_rate"] or 0) / 100 * attempted)) if attempted else 0
+            passes_calc = (
+                int(round((report_data["pass_rate"] or 0) / 100 * attempted))
+                if attempted
+                else 0
+            )
             pass_count = passes_calc
             fail_count = max(attempted - passes_calc, 0)
 
@@ -623,9 +626,7 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
         # compute overall index = start_idx + i for display
         for i, row in enumerate(ranking_rows_page, start=1):
             overall_index = start_idx + i
-            exam_id_badge = (
-                f"<span class='badge bg-secondary-subtle text-secondary pill-badge'>{row['exam_id']}</span>"
-            )
+            exam_id_badge = f"<span class='badge bg-secondary-subtle text-secondary pill-badge'>{row['exam_id']}</span>"
 
             # SA Pending OR normal pass rate
             if row["sa_pending"]:
@@ -643,9 +644,7 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
                 "</tr>\n"
             )
     else:
-        ranking_rows_html = (
-            "<tr><td colspan='4' class='text-center text-muted py-3'>No exams found.</td></tr>"
-        )
+        ranking_rows_html = "<tr><td colspan='4' class='text-center text-muted py-3'>No exams found.</td></tr>"
 
     # ---------- pagination controls ----------
     # build base query string pieces to preserve selected exam and sort when switching pages
@@ -674,7 +673,7 @@ def get_exam_results_summary_report(query: Dict[str, list]) -> Tuple[str, int]:
         page_links.append(
             f'<li class="page-item {active_cls}">'
             f'<a class="page-link" href="?page={p}{base_qs_str}">{p}</a>'
-            f'</li>'
+            f"</li>"
         )
 
     page_links_html = "".join(page_links)
