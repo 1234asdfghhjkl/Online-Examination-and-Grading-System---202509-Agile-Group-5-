@@ -33,4 +33,4 @@ jobs:
       env:
         FIREBASE_CERT: "dummy_cert.json" 
       run: |
-        pytest tests/
+        pytest -v tests/
